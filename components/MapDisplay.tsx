@@ -16,13 +16,15 @@ interface MapDisplayProps {
   onGeometryCaptured: (type: GeometryType, coords: any) => void;
   onCancelDrawing: () => void;
   resetViewToggle: number;
+  zoomInToggle: number;
+  zoomOutToggle: number;
 }
 
-const MapDisplay: React.FC<MapDisplayProps> = ({ 
-  geometries, 
+const MapDisplay: React.FC<MapDisplayProps> = ({
+  geometries,
   focusedGeoId,
-  focusedRuleId, 
-  rules, 
+  focusedRuleId,
+  rules,
   isVisible = true,
   onSelectAsset,
   currentMissionId,
@@ -30,7 +32,9 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   drawingMode,
   onGeometryCaptured,
   onCancelDrawing,
-  resetViewToggle
+  resetViewToggle,
+  zoomInToggle,
+  zoomOutToggle
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -61,6 +65,15 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     }
   }, [geometries]);
 
+  // Handle zoom controls
+  useEffect(() => {
+    if (zoomInToggle > 0) mapInstanceRef.current?.zoomIn();
+  }, [zoomInToggle]);
+
+  useEffect(() => {
+    if (zoomOutToggle > 0) mapInstanceRef.current?.zoomOut();
+  }, [zoomOutToggle]);
+
   // Handle manual reset view
   useEffect(() => {
     if (resetViewToggle > 0) {
@@ -74,12 +87,11 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
 
     const m = L.map(mapContainerRef.current, {
       zoomControl: false,
-      doubleClickZoom: false 
+      doubleClickZoom: false
     });
-    
+
     mapInstanceRef.current = m;
 
-    L.control.zoom({ position: 'topright' }).addTo(m);
     m.setView([34.0522, -118.2437], 13);
 
     return () => {
@@ -118,7 +130,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         drawPointsRef.current.push(newPoint);
 
         if (drawLayerRef.current) drawLayerRef.current.remove();
-        
+
         if (drawPointsRef.current.length === 1) {
           drawLayerRef.current = L.circleMarker(newPoint, { radius: 6, color: '#6366f1', fillOpacity: 1 }).addTo(map);
         } else {
@@ -162,7 +174,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
 
     if (tileLayerRef.current) tileLayerRef.current.remove();
 
-    const tileUrl = darkMode 
+    const tileUrl = darkMode
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
       : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
@@ -177,7 +189,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    Object.values(geoLayersRef.current).forEach((layer) => layer.remove());
+    (Object.values(geoLayersRef.current) as L.Layer[]).forEach((layer) => layer.remove());
     geoLayersRef.current = {};
 
     geometries.forEach(geo => {
@@ -206,7 +218,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       }
 
       layer.on('click', (e: L.LeafletMouseEvent) => {
-        if (drawingMode) return; 
+        if (drawingMode) return;
         L.DomEvent.stopPropagation(e);
         if (onSelectAsset) onSelectAsset(geo.missionId, geo.ruleId, geo.id);
       });
@@ -222,8 +234,8 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         </div>
       `;
 
-      layer.bindPopup(popupContent, { 
-        closeButton: false, 
+      layer.bindPopup(popupContent, {
+        closeButton: false,
         offset: [0, -5],
         autoPan: false,
         className: darkMode ? 'dark-popup' : ''
@@ -243,7 +255,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !isVisible || drawingMode) return;
-    
+
     const targetGeoId = focusedGeoId || (focusedRuleId ? geometries.find(g => g.ruleId === focusedRuleId)?.id : null);
     if (!targetGeoId) return;
 
@@ -268,7 +280,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   return (
     <div className="w-full h-full relative">
       <div ref={mapContainerRef} className="w-full h-full z-0" />
-      
+
       {drawingMode && (
         <div className="absolute inset-x-0 top-0 flex flex-col items-center pointer-events-none z-[2000] p-4">
           <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur shadow-2xl rounded-2xl border border-indigo-200 dark:border-indigo-900 p-4 flex flex-col items-center gap-3 pointer-events-auto animate-fadeIn">
@@ -279,19 +291,19 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-slate-400 text-center max-w-xs">
-              {drawingMode === 'Point' 
-                ? 'Click once on the map to set the rule location.' 
+              {drawingMode === 'Point'
+                ? 'Click once on the map to set the rule location.'
                 : 'Click multiple times to define the area. Double-click or click "Finish" to complete.'}
             </p>
             <div className="flex gap-2 w-full mt-2">
-              <button 
+              <button
                 onClick={onCancelDrawing}
                 className="flex-1 px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               {drawingMode === 'Polygon' && (
-                <button 
+                <button
                   onClick={() => {
                     if (drawPointsRef.current.length > 2) onGeometryCaptured('Polygon', [...drawPointsRef.current]);
                   }}
