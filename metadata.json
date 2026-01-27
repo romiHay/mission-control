@@ -1,0 +1,8 @@
+
+{
+  "name": "Mission Control - Rule & Geometry Manager",
+  "description": "A high-performance mission management dashboard that synchronizes mission rules with spatial geometries on an interactive map. Features automated rule suggestions and AI-driven rule parsing.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
