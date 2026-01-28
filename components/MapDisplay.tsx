@@ -61,7 +61,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     });
 
     if (bounds.isValid()) {
-      map.flyToBounds(bounds, { padding: [50, 50], duration: 1 });
+      map.flyToBounds(bounds, { padding: [100, 100], duration: 1 });
     }
   }, [geometries]);
 
@@ -92,7 +92,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
 
     mapInstanceRef.current = m;
 
-    m.setView([34.0522, -118.2437], 13);
+    m.setView([34.0522, -118.2437], 11);
 
     return () => {
       m.remove();
@@ -265,10 +265,10 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       if (layer) {
         layer.openPopup();
         if (targetGeo.type === 'Point') {
-          map.flyTo(targetGeo.coordinates as [number, number], 16, { duration: 1 });
+          map.flyTo(targetGeo.coordinates as [number, number], 18, { duration: 1 });
         } else {
           if (layer instanceof L.Polygon) {
-            map.flyToBounds(layer.getBounds(), { padding: [80, 80], duration: 1 });
+            map.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
           }
         }
       }
