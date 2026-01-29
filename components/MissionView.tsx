@@ -58,6 +58,9 @@ const MissionView: React.FC<MissionViewProps> = ({
   const missionGeometries = geometries.filter(g => g.missionId === mission.id);
 
   const toggleRule = (id: string) => {
+    // Prevent toggling rules when the sidebar form is open
+    if (isFormOpen) return;
+
     const newId = openRuleId === id ? null : id;
     setOpenRuleId(newId);
     onSetActiveRule(newId);
@@ -170,6 +173,7 @@ const MissionView: React.FC<MissionViewProps> = ({
               onEdit={handleEdit}
               onDelete={handleDelete}
               geometries={missionGeometries}
+              disabled={isFormOpen}
             />
           ) : (
             <MissionStatsView

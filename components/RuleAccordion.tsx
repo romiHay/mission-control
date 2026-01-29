@@ -9,9 +9,10 @@ interface RuleAccordionProps {
   onEdit: (rule: Rule) => void;
   onDelete: (id: string) => void;
   geometries: MissionGeometry[];
+  disabled?: boolean;
 }
 
-const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onToggle, onEdit, onDelete, geometries }) => {
+const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onToggle, onEdit, onDelete, geometries, disabled }) => {
   if (rules.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-gray-400 dark:text-slate-600">
@@ -24,19 +25,19 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
   }
 
   return (
-    <div className="divide-y divide-gray-100 dark:divide-slate-800">
+    <div className={`divide-y divide-gray-100 dark:divide-slate-800 transition-opacity duration-300 ${disabled ? 'opacity-50 pointer-events-none saturate-50' : ''}`}>
       {rules.map((rule) => {
         const isOpen = openRuleId === rule.id;
         const linkedGeo = geometries.find(g => g.id === rule.geometryId);
 
         return (
           <div key={rule.id} className={`transition-all duration-300 ${isOpen ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : 'bg-white dark:bg-slate-900'}`}>
-            <div 
+            <div
               className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors"
               onClick={() => onToggle(rule.id)}
             >
               <div className="flex items-center gap-4 flex-1">
-                <button 
+                <button
                   className={`p-1 rounded-md transition-transform duration-300 ${isOpen ? '-rotate-90 text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/40' : 'rotate-0 text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:hover:text-slate-400'}`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -60,7 +61,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
               </div>
 
               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                <button 
+                <button
                   onClick={() => onEdit(rule)}
                   className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-800 rounded transition-all"
                   title="Edit Rule"
@@ -69,7 +70,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
-                <button 
+                <button
                   onClick={() => onDelete(rule.id)}
                   className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-white dark:hover:bg-slate-800 rounded transition-all"
                   title="Delete Rule"
