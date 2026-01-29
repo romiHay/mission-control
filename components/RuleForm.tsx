@@ -18,6 +18,8 @@ interface RuleFormProps {
   darkMode: boolean;
 }
 
+// RuleForm is the sliding sidebar where users configure mission rules.
+// It handles metadata (name, instructions) and spatial attachment logic.
 const RuleForm: React.FC<RuleFormProps> = ({
   missionId,
   initialData,
@@ -32,21 +34,27 @@ const RuleForm: React.FC<RuleFormProps> = ({
   onGeometryCaptured,
   darkMode
 }) => {
+  // --- STATE MANAGEMENT ---
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [value, setValue] = useState(initialData?.value || '');
   const [geometryId, setGeometryId] = useState(initialData?.geometryId || '');
+
+  // geoSource tracks if we use an 'existing' asset, a 'new' drawing, or 'none'.
   const [geoSource, setGeoSource] = useState<'existing' | 'new' | 'none'>(
     initialData?.geometryId ? 'existing' : (isNewGeometryCaptured || !!tempGeometryType) ? 'new' : 'none'
   );
 
+  // tracks if the user is currently interacting with the mini-map drawing tools
   const [isDrawingInline, setIsDrawingInline] = useState(false);
 
-  // Switch confirmation states
+  // --- CONFIRMATION LOGIC ---
+  // To prevent accidental data loss, we show a dialog when switching modes with unsaved work.
   const [pendingSource, setPendingSource] = useState<'existing' | 'new' | 'none' | null>(null);
   const [pendingType, setPendingType] = useState<GeometryType | null>(null);
   const [showConfirmSwitch, setShowConfirmSwitch] = useState(false);
 
+  // Triggered when clicking 'Existing', 'New', or 'None' tabs
   const handleSourceChangeRequest = (newSource: 'existing' | 'new' | 'none') => {
     if (newSource === geoSource) return;
 
@@ -80,6 +88,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
     }
   };
 
+  // Finalizes the switch if the user clicks 'Continue' in the warning dialog
   const confirmSourceChange = () => {
     if (pendingSource) {
       setGeoSource(pendingSource);
@@ -96,6 +105,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
     setShowConfirmSwitch(false);
   };
 
+  // --- FORM SUBMISSION ---
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({

@@ -5,15 +5,25 @@ import MissionSidebar from './components/MissionSidebar';
 import MissionView from './components/MissionView';
 import { INITIAL_MISSIONS, INITIAL_GEOMETRIES, INITIAL_RULES } from './mockData';
 
+// --- APPLICATION ARCHITECTURE ---
+// App.tsx is the root component that manages the global state for the entire mission control.
+// It handles:
+// 1. Mission data and selection.
+// 2. Rule and Geometry updates/linking.
+// 3. Global Dark Mode/Theme state.
 const App: React.FC = () => {
+  // Global data stores
   const [missions, setMissions] = useState<Mission[]>(INITIAL_MISSIONS);
   const [selectedMissionId, setSelectedMissionId] = useState<string | null>(INITIAL_MISSIONS[0].id);
   const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
   const [geometries, setGeometries] = useState<MissionGeometry[]>(INITIAL_GEOMETRIES);
+
+  // Cross-component UI state (shared between sidebar, map, and form)
   const [activeRuleId, setActiveRuleId] = useState<string | null>(null);
   const [focusedGeoId, setFocusedGeoId] = useState<string | null>(null);
-  
-  // Theme state
+
+  // --- THEME HANDLING ---
+  // Tracks Dark/Light mode and persists the preference in localStorage
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -42,10 +52,10 @@ const App: React.FC = () => {
       setGeometries(prev => [...prev, newGeo]);
     }
     setRules(prev => [...prev, newRule]);
-    
+
     // Link existing geometry if provided but not a brand new one
     if (!newGeo && newRule.geometryId) {
-      setGeometries(prev => prev.map(g => 
+      setGeometries(prev => prev.map(g =>
         g.id === newRule.geometryId ? { ...g, ruleId: newRule.id } : g
       ));
     }
@@ -55,7 +65,7 @@ const App: React.FC = () => {
     if (newGeo) {
       setGeometries(prev => [...prev, newGeo]);
     }
-    
+
     setRules(prev => prev.map(r => r.id === updatedRule.id ? updatedRule : r));
     setGeometries(prev => prev.map(g => {
       // Clear old link if geometry changed
@@ -78,9 +88,9 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden">
-      <MissionSidebar 
-        missions={missions} 
-        selectedMissionId={selectedMissionId} 
+      <MissionSidebar
+        missions={missions}
+        selectedMissionId={selectedMissionId}
         onSelectMission={(id) => {
           setSelectedMissionId(id);
           setActiveRuleId(null);
@@ -92,7 +102,7 @@ const App: React.FC = () => {
 
       <main className="flex-1 overflow-hidden">
         {selectedMission ? (
-          <MissionView 
+          <MissionView
             mission={selectedMission}
             rules={rules}
             geometries={geometries}

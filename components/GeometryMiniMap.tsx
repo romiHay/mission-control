@@ -1,3 +1,5 @@
+// This component provides a small, interactive map inside the Rule Form.
+// It allows users to either view an existing spatial asset or draw a new one (Point or Polygon).
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { GeometryType } from '../types';
@@ -19,13 +21,18 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
     onCancelDrawing,
     darkMode
 }) => {
+    // Map container and instance references
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<L.Map | null>(null);
     const layerGroupRef = useRef<L.LayerGroup | null>(null);
-    const tempPointsRef = useRef<[number, number][]>([]);
 
+    // Internal state to track the points being drawn before they are confirmed
+    const tempPointsRef = useRef<[number, number][]>([]);
+    const tempLayerRef = useRef<L.Layer | null>(null);
     const [isReady, setIsReady] = useState(false);
 
+    // STEP 1: Initialization
+    // We initialize the Leaflet map once the component mounts.
     useEffect(() => {
         if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -58,6 +65,8 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
         };
     }, [darkMode]);
 
+    // STEP 2: Displaying Existing Geometry
+    // This effect handles rendering the provided 'coordinates' on the map when not in drawing mode.
     useEffect(() => {
         const map = mapInstanceRef.current;
         const group = layerGroupRef.current;
@@ -90,8 +99,12 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
         }
     }, [coordinates, type, isDrawing, isReady]);
 
+    // STEP 3: Drawing Mode Setup
+    // This effect sets up event listeners for drawing when 'isDrawing' is true.
     useEffect(() => {
         const map = mapInstanceRef.current;
+        // STEP 4: Interaction Logic
+        // This effect handles the drawing process by listening to map events.
         const group = layerGroupRef.current;
         if (!map || !group || !isDrawing || !isReady) {
             if (map) {
@@ -103,37 +116,41 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
         }
 
         map.invalidateSize();
+        // Change cursor to crosshair to indicate active drawing mode
         map.getContainer().style.cursor = 'crosshair';
         group.clearLayers();
         tempPointsRef.current = [];
+        tempLayerRef.current = null;
 
+        // Redraws the visual elements (marker or polygon) while user is clicking
         const redrawTemp = () => {
-            group.clearLayers();
+            if (tempLayerRef.current) group.removeLayer(tempLayerRef.current);
             if (tempPointsRef.current.length === 0) return;
 
             if (type === 'Point') {
-                L.circleMarker(tempPointsRef.current[0], { radius: 6, color: '#f59e0b', weight: 2 }).addTo(group);
-            } else {
-                tempPointsRef.current.forEach(pt => {
-                    L.circleMarker(pt, { radius: 3, color: '#f59e0b', fillOpacity: 1 }).addTo(group);
+                tempLayerRef.current = L.circleMarker(tempPointsRef.current[0], {
+                    radius: 8,
+                    color: '#6366f1',
+                    fillOpacity: 1
                 });
-                if (tempPointsRef.current.length > 1) {
-                    L.polyline(tempPointsRef.current, { color: '#f59e0b', weight: 3, dashArray: '5, 10' }).addTo(group);
-                }
-                if (tempPointsRef.current.length > 2) {
-                    L.polygon(tempPointsRef.current, { color: '#f59e0b', weight: 1, fillOpacity: 0.1 }).addTo(group);
-                }
+            } else {
+                tempLayerRef.current = L.polygon(tempPointsRef.current, {
+                    color: '#6366f1',
+                    fillOpacity: 0.3
+                });
             }
+            tempLayerRef.current.addTo(group);
         };
 
         const handleClick = (e: L.LeafletMouseEvent) => {
             const latlng: [number, number] = [e.latlng.lat, e.latlng.lng];
             if (type === 'Point') {
+                // Points are captured instantly on the first click
                 tempPointsRef.current = [latlng];
                 redrawTemp();
                 onGeometryCaptured(latlng);
             } else {
-                // Prevent accidental duplicate points from rapid clicking
+                // For polygons, we prevent adding exact duplicate points from rapid clicking
                 const last = tempPointsRef.current[tempPointsRef.current.length - 1];
                 if (last && last[0] === latlng[0] && last[1] === latlng[1]) return;
 
@@ -142,12 +159,12 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
             }
         };
 
+        // STEP 5: Completion Logic (Double-Click)
+        // We use double-click to finalize a polygon shape.
         const handleDblClick = (e: L.LeafletMouseEvent) => {
-            //L.DomEvent.preventDefault(e);
-            //L.DomEvent.stopPropagation(e);
-            
+            // Stop propagation to prevent conflict with other map behaviors
             L.DomEvent.stop(e.originalEvent);
-            // Wait slightly for any trailing click event to finish
+            // Wait slightly for any trailing click event to finish processing
             setTimeout(() => {
                 if (type === 'Polygon' && tempPointsRef.current.length >= 3) {
                     onGeometryCaptured([...tempPointsRef.current]);

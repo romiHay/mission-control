@@ -33,19 +33,23 @@ const MissionView: React.FC<MissionViewProps> = ({
   onSetActiveRule,
   darkMode
 }) => {
+  // --- STATE MANAGEMENT ---
   const [openRuleId, setOpenRuleId] = useState<string | null>(activeRuleId);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | undefined>(undefined);
   const [viewMode, setViewMode] = useState<ViewMode>('rules');
+
+  // Controls for the main map view
   const [resetViewToggle, setResetViewToggle] = useState(0);
   const [zoomInToggle, setZoomInToggle] = useState(0);
   const [zoomOutToggle, setZoomOutToggle] = useState(0);
 
-  // Drawing States
+  // Drawing States (Global tracking for geometry capture)
   const [drawingMode, setDrawingMode] = useState<GeometryType | null>(null);
   const [formDrawingType, setFormDrawingType] = useState<GeometryType | null>(null);
   const [tempGeometry, setTempGeometry] = useState<{ type: GeometryType, coordinates: any } | null>(null);
 
+  // Synchronize internal state with the globally active rule
   useEffect(() => {
     setOpenRuleId(activeRuleId);
   }, [activeRuleId]);
@@ -79,22 +83,26 @@ const MissionView: React.FC<MissionViewProps> = ({
     setIsFormOpen(true);
   };
 
+  // --- DRAWING HANDLERS ---
+
+  // isInline indicates if the drawing is happening inside the Sidebar Mini-Map
   const handleStartDrawing = (type: GeometryType, isInline?: boolean) => {
     if (isInline) {
       setFormDrawingType(type);
-      setDrawingMode(null);
+      setDrawingMode(null); // Ensure main map drawing is disabled
     } else {
       setDrawingMode(type);
       setFormDrawingType(null);
-      setIsFormOpen(false);
+      setIsFormOpen(false); // Close sidebar to let user draw on the large map
     }
   };
 
+  // Called when a point or area is finalized on any map
   const handleGeometryCaptured = useCallback((type: GeometryType, coords: any) => {
     setTempGeometry({ type, coordinates: coords });
     setDrawingMode(null);
     setFormDrawingType(null);
-    setIsFormOpen(true);
+    setIsFormOpen(true); // Re-open or keep the form open to show the captured result
   }, []);
 
   const handleClearTempGeometry = () => {

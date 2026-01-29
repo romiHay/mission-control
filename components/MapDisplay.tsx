@@ -36,15 +36,16 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   zoomInToggle,
   zoomOutToggle
 }) => {
+  // --- REFS & INSTANCE TRACKING ---
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const geoLayersRef = useRef<Record<string, L.Layer>>({});
+  const geoLayersRef = useRef<Record<string, L.Layer>>({}); // Stores references to active geometry layers
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
-  // Drawing Refs
+  // Drawing Refs: used for tracking mouse movement and click points during creation
   const drawPointsRef = useRef<[number, number][]>([]);
-  const drawLayerRef = useRef<L.Layer | null>(null);
-  const guideLayerRef = useRef<L.Polyline | null>(null);
+  const drawLayerRef = useRef<L.Layer | null>(null); // The actual visual shape
+  const guideLayerRef = useRef<L.Polyline | null>(null); // The dashed guide line following the cursor
 
   // Helper to fit mission bounds
   const fitMissionBounds = useCallback(() => {
@@ -81,18 +82,20 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     }
   }, [resetViewToggle, fitMissionBounds]);
 
-  // Initialize Map
+  // STEP 1: Initialization
+  // We initialize the Leaflet map and set the initial viewpoint.
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
     const m = L.map(mapContainerRef.current, {
       zoomControl: false,
-      doubleClickZoom: false
+      doubleClickZoom: false // Disabled to allow dblclick for polygon completion
     });
 
     mapInstanceRef.current = m;
 
-    m.setView([34.0522, -118.2437], 11);
+    // Default center point (e.g., Tel Aviv coordinates)
+    m.setView([32.0853, 34.7818], 13);
 
     return () => {
       m.remove();
@@ -100,11 +103,13 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     };
   }, []);
 
-  // Update Drawing Logic
+  // STEP 2: Main Drawing Logic
+  // Handles the interactive drawing of points and areas on the Large Map.
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
+    // Reset drawing state when entrying or exiting drawing mode
     drawPointsRef.current = [];
     if (drawLayerRef.current) {
       drawLayerRef.current.remove();
@@ -249,7 +254,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     if (geometries.length > 0 && !focusedGeoId && !focusedRuleId && !drawingMode) {
       fitMissionBounds();
     }
-  }, [geometries, rules, darkMode, currentMissionId]);
+  }, [geometries, rules, darkMode, currentMissionId, fitMissionBounds]);
 
   // Focus Zoom (triggered by manual interactions or selecting a rule from the list)
   useEffect(() => {
