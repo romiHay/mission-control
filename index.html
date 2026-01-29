@@ -11,10 +11,6 @@
         darkMode: 'class',
         theme: {
           extend: {
-            animation: {
-              fadeIn: 'fadeIn 0.3s ease-in-out',
-              slideDown: 'slideDown 0.3s ease-in-out',
-            },
             keyframes: {
               fadeIn: {
                 '0%': { opacity: '0' },
@@ -23,8 +19,17 @@
               slideDown: {
                 '0%': { height: '0', opacity: '0' },
                 '100%': { height: 'auto', opacity: '1' },
+              },
+              slideInRight: {
+                '0%': { transform: 'translateX(100%)' },
+                '100%': { transform: 'translateX(0)' },
               }
-            }
+            },
+            animation: {
+              fadeIn: 'fadeIn 0.3s ease-in-out',
+              slideDown: 'slideDown 0.3s ease-in-out',
+              slideInRight: 'slideInRight 0.3s ease-out',
+            },
           }
         }
       }

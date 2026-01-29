@@ -14,11 +14,11 @@ interface RuleFormProps {
   onClearTempGeometry: () => void;
 }
 
-const RuleForm: React.FC<RuleFormProps> = ({ 
-  missionId, 
-  initialData, 
-  onClose, 
-  onSave, 
+const RuleForm: React.FC<RuleFormProps> = ({
+  missionId,
+  initialData,
+  onClose,
+  onSave,
   availableGeometries,
   onStartDrawing,
   isNewGeometryCaptured,
@@ -41,8 +41,8 @@ const RuleForm: React.FC<RuleFormProps> = ({
     if (newSource === geoSource) return;
 
     // Check if switching from an active selection to something else
-    const hasUnsavedWork = (geoSource === 'new' && isNewGeometryCaptured) || 
-                           (geoSource === 'existing' && geometryId && geometryId !== initialData?.geometryId);
+    const hasUnsavedWork = (geoSource === 'new' && isNewGeometryCaptured) ||
+      (geoSource === 'existing' && geometryId && geometryId !== initialData?.geometryId);
 
     if (hasUnsavedWork) {
       setPendingSource(newSource);
@@ -61,7 +61,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
       // Explicitly clear all previous spatial state on confirmation
       if (pendingSource !== 'existing') setGeometryId('');
       if (pendingSource !== 'new') onClearTempGeometry();
-      
+
       setPendingSource(null);
       setShowConfirmSwitch(false);
     }
@@ -82,7 +82,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transform transition-all scale-100 border border-transparent dark:border-slate-800 relative">
-        
+
         {/* Warning Pop-up for Source Switching */}
         {showConfirmSwitch && (
           <div className="absolute inset-0 z-[2100] bg-white/95 dark:bg-slate-900/95 backdrop-blur flex items-center justify-center p-8 animate-fadeIn">
@@ -97,13 +97,13 @@ const RuleForm: React.FC<RuleFormProps> = ({
                 Changing the spatial attachment mode will discard your current drawing or selection.
               </p>
               <div className="flex gap-3 pt-4">
-                <button 
+                <button
                   onClick={() => setShowConfirmSwitch(false)}
                   className="flex-1 px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-lg text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-colors"
                 >
                   Stay
                 </button>
-                <button 
+                <button
                   onClick={confirmSourceChange}
                   className="flex-1 px-4 py-3 bg-amber-600 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-all active:scale-95"
                 >
@@ -122,14 +122,14 @@ const RuleForm: React.FC<RuleFormProps> = ({
             </svg>
           </button>
         </header>
-        
+
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Rule Name</label>
-              <input 
+              <input
                 required
-                type="text" 
+                type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
@@ -139,7 +139,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
 
             <div>
               <label className="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Description</label>
-              <textarea 
+              <textarea
                 required
                 rows={3}
                 value={description}
@@ -166,7 +166,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
             </div>
 
             {geoSource === 'existing' && (
-              <select 
+              <select
                 value={geometryId}
                 onChange={e => setGeometryId(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -194,7 +194,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
                         <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
                           {tempGeometryType} Captured
                         </p>
-                        <button 
+                        <button
                           type="button"
                           onClick={onClearTempGeometry}
                           className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 underline"
@@ -205,15 +205,15 @@ const RuleForm: React.FC<RuleFormProps> = ({
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                      <button 
+                      <button
                         type="button"
                         onClick={() => onStartDrawing(tempGeometryType || 'Point')}
                         className="flex items-center justify-center gap-2 px-3 py-3 border border-indigo-200 dark:border-indigo-900 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/10 text-indigo-600 dark:text-indigo-400 transition-all text-[10px] font-black uppercase tracking-widest"
                       >
                         Redraw {tempGeometryType}
                       </button>
-                      
-                      <button 
+
+                      <button
                         type="button"
                         onClick={() => onStartDrawing(tempGeometryType === 'Point' ? 'Polygon' : 'Point')}
                         className="flex items-center justify-center gap-2 px-3 py-3 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-600 dark:text-slate-400 transition-all text-[10px] font-black uppercase tracking-widest"
@@ -224,7 +224,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => onStartDrawing('Point')}
                       className="flex flex-col items-center gap-2 p-4 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all text-gray-500 hover:text-indigo-600"
@@ -235,7 +235,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
                       </svg>
                       <span className="text-[10px] font-black uppercase tracking-widest">Draw Point</span>
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => onStartDrawing('Polygon')}
                       className="flex flex-col items-center gap-2 p-4 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all text-gray-500 hover:text-indigo-600"
@@ -253,9 +253,9 @@ const RuleForm: React.FC<RuleFormProps> = ({
 
           <div>
             <label className="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">Logic / Value</label>
-            <input 
+            <input
               required
-              type="text" 
+              type="text"
               value={value}
               onChange={e => setValue(e.target.value)}
               className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
@@ -264,14 +264,14 @@ const RuleForm: React.FC<RuleFormProps> = ({
           </div>
 
           <div className="pt-4 flex gap-3">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={onClose}
               className="flex-1 px-6 py-3 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none transition-all active:scale-95"
             >

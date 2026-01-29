@@ -3,16 +3,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Mission, Rule, MissionGeometry } from './types';
 import MissionSidebar from './components/MissionSidebar';
 import MissionView from './components/MissionView';
-import { INITIAL_MISSIONS, INITIAL_GEOMETRIES, INITIAL_RULES } from './mockData';
+import { api } from './services/api';
 
 const App: React.FC = () => {
-  const [missions, setMissions] = useState<Mission[]>(INITIAL_MISSIONS);
-  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(INITIAL_MISSIONS[0].id);
-  const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
-  const [geometries, setGeometries] = useState<MissionGeometry[]>(INITIAL_GEOMETRIES);
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [geometries, setGeometries] = useState<MissionGeometry[]>([]);
   const [activeRuleId, setActiveRuleId] = useState<string | null>(null);
   const [focusedGeoId, setFocusedGeoId] = useState<string | null>(null);
-  
+  const [loading, setLoading] = useState(true);
+
   // Theme state
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -29,6 +30,28 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
+  // Load initial missions
+  useEffect(() => {
+    api.getMissions().then(data => {
+      setMissions(data);
+      if (data.length > 0) setSelectedMissionId(data[0].id);
+      setLoading(false);
+    });
+  }, []);
+
+  // Load rules and geometries when mission changes
+  useEffect(() => {
+    if (selectedMissionId) {
+      Promise.all([
+        api.getRules(selectedMissionId),
+        api.getGeometries(selectedMissionId)
+      ]).then(([rulesData, geoData]) => {
+        setRules(rulesData);
+        setGeometries(geoData);
+      });
+    }
+  }, [selectedMissionId]);
+
   const selectedMission = missions.find(m => m.id === selectedMissionId) || null;
 
   const handleSelectSpatialAsset = (missionId: string, ruleId?: string, geoId?: string) => {
@@ -37,17 +60,22 @@ const App: React.FC = () => {
     setFocusedGeoId(geoId || null);
   };
 
-  const handleAddRule = (newRule: Rule, newGeo?: MissionGeometry) => {
-    if (newGeo) {
-      setGeometries(prev => [...prev, newGeo]);
-    }
-    setRules(prev => [...prev, newRule]);
-    
-    // Link existing geometry if provided but not a brand new one
-    if (!newGeo && newRule.geometryId) {
-      setGeometries(prev => prev.map(g => 
-        g.id === newRule.geometryId ? { ...g, ruleId: newRule.id } : g
-      ));
+  const handleAddRule = async (newRule: Rule, newGeo?: MissionGeometry) => {
+    if (selectedMissionId) {
+      if (newGeo) {
+        await api.addGeometry(selectedMissionId, newGeo);
+        setGeometries(prev => [...prev, newGeo]);
+      }
+
+      await api.addRule(selectedMissionId, newRule);
+      setRules(prev => [...prev, newRule]);
+
+      if (!newGeo && newRule.geometryId) {
+        // This part would ideally be updated on backend too if geometry->rule relation is kept there
+        setGeometries(prev => prev.map(g =>
+          g.id === newRule.geometryId ? { ...g, ruleId: newRule.id } : g
+        ));
+      }
     }
   };
 
@@ -55,7 +83,7 @@ const App: React.FC = () => {
     if (newGeo) {
       setGeometries(prev => [...prev, newGeo]);
     }
-    
+
     setRules(prev => prev.map(r => r.id === updatedRule.id ? updatedRule : r));
     setGeometries(prev => prev.map(g => {
       // Clear old link if geometry changed
@@ -78,9 +106,9 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden">
-      <MissionSidebar 
-        missions={missions} 
-        selectedMissionId={selectedMissionId} 
+      <MissionSidebar
+        missions={missions}
+        selectedMissionId={selectedMissionId}
         onSelectMission={(id) => {
           setSelectedMissionId(id);
           setActiveRuleId(null);
@@ -92,7 +120,7 @@ const App: React.FC = () => {
 
       <main className="flex-1 overflow-hidden">
         {selectedMission ? (
-          <MissionView 
+          <MissionView
             mission={selectedMission}
             rules={rules}
             geometries={geometries}
