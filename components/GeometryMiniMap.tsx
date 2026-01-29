@@ -143,9 +143,10 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
         };
 
         const handleDblClick = (e: L.LeafletMouseEvent) => {
-            L.DomEvent.preventDefault(e);
-            L.DomEvent.stopPropagation(e);
-
+            //L.DomEvent.preventDefault(e);
+            //L.DomEvent.stopPropagation(e);
+            
+            L.DomEvent.stop(e.originalEvent);
             // Wait slightly for any trailing click event to finish
             setTimeout(() => {
                 if (type === 'Polygon' && tempPointsRef.current.length >= 3) {
