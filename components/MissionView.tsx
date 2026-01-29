@@ -43,6 +43,7 @@ const MissionView: React.FC<MissionViewProps> = ({
 
   // Drawing States
   const [drawingMode, setDrawingMode] = useState<GeometryType | null>(null);
+  const [formDrawingType, setFormDrawingType] = useState<GeometryType | null>(null);
   const [tempGeometry, setTempGeometry] = useState<{ type: GeometryType, coordinates: any } | null>(null);
 
   useEffect(() => {
@@ -78,16 +79,23 @@ const MissionView: React.FC<MissionViewProps> = ({
     setIsFormOpen(true);
   };
 
-  const handleStartDrawing = (type: GeometryType) => {
-    setDrawingMode(type);
-    setIsFormOpen(false);
+  const handleStartDrawing = (type: GeometryType, isInline?: boolean) => {
+    if (isInline) {
+      setFormDrawingType(type);
+      setDrawingMode(null);
+    } else {
+      setDrawingMode(type);
+      setFormDrawingType(null);
+      setIsFormOpen(false);
+    }
   };
 
-  const handleGeometryCaptured = (type: GeometryType, coords: any) => {
+  const handleGeometryCaptured = useCallback((type: GeometryType, coords: any) => {
     setTempGeometry({ type, coordinates: coords });
     setDrawingMode(null);
+    setFormDrawingType(null);
     setIsFormOpen(true);
-  };
+  }, []);
 
   const handleClearTempGeometry = () => {
     setTempGeometry(null);
@@ -114,6 +122,7 @@ const MissionView: React.FC<MissionViewProps> = ({
     }
     setIsFormOpen(false);
     setTempGeometry(null);
+    setFormDrawingType(null);
   };
 
   const handleResetMap = () => {
@@ -266,10 +275,13 @@ const MissionView: React.FC<MissionViewProps> = ({
           onClose={() => setIsFormOpen(false)}
           onSave={handleSaveRule}
           availableGeometries={missionGeometries}
-          onStartDrawing={handleStartDrawing}
+          onStartDrawing={(type) => handleStartDrawing(type, true)}
           isNewGeometryCaptured={!!tempGeometry}
-          tempGeometryType={tempGeometry?.type}
+          tempGeometryType={formDrawingType || tempGeometry?.type}
+          tempGeometryCoords={tempGeometry?.coordinates}
           onClearTempGeometry={handleClearTempGeometry}
+          onGeometryCaptured={handleGeometryCaptured}
+          darkMode={darkMode}
         />
       )}
     </div>
