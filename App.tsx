@@ -88,18 +88,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden">
-      <MissionSidebar
-        missions={missions}
-        selectedMissionId={selectedMissionId}
-        onSelectMission={(id) => {
-          setSelectedMissionId(id);
-          setActiveRuleId(null);
-          setFocusedGeoId(null);
-        }}
-        darkMode={darkMode}
-        onToggleTheme={() => setDarkMode(!darkMode)}
-      />
-
       <main className="flex-1 overflow-hidden">
         {selectedMission ? (
           <MissionView
@@ -127,6 +115,18 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      <MissionSidebar
+        missions={missions}
+        selectedMissionId={selectedMissionId}
+        onSelectMission={(id) => {
+          setSelectedMissionId(id);
+          setActiveRuleId(null);
+          setFocusedGeoId(null);
+        }}
+        darkMode={darkMode}
+        onToggleTheme={() => setDarkMode(!darkMode)}
+      />
     </div>
   );
 };
