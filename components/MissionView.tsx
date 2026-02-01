@@ -144,83 +144,10 @@ const MissionView: React.FC<MissionViewProps> = ({
 
   return (
     <div className="h-full flex flex-col md:flex-row animate-fadeIn relative bg-gray-50 dark:bg-slate-950 transition-colors">
-      <div className={`flex-1 h-full relative transition-all duration-300 ease-in-out ${viewMode === 'rules' ? 'opacity-100 visible' : 'opacity-0 invisible absolute right-0'}`}
-        style={{ width: viewMode === 'rules' ? 'auto' : '0' }}>
-        <div className="h-full w-full p-4 min-w-[300px]">
-          <div className={`w-full h-full bg-gray-200 dark:bg-slate-800 rounded-xl overflow-hidden shadow-inner border border-gray-200 dark:border-slate-800 transition-all ${drawingMode ? 'ring-4 ring-indigo-500' : ''}`}>
-            <MapDisplay
-              geometries={missionGeometries}
-              focusedGeoId={focusedGeoId}
-              focusedRuleId={viewMode === 'rules' ? openRuleId : null}
-              rules={rules}
-              isVisible={viewMode === 'rules'}
-              onSelectAsset={onSelectSpatialAsset}
-              currentMissionId={mission.id}
-              darkMode={darkMode}
-              drawingMode={drawingMode}
-              onGeometryCaptured={handleGeometryCaptured}
-              onCancelDrawing={() => {
-                setDrawingMode(null);
-                setIsFormOpen(true);
-              }}
-              resetViewToggle={resetViewToggle}
-              zoomInToggle={zoomInToggle}
-              zoomOutToggle={zoomOutToggle}
-            />
-          </div>
-
-          <div className="absolute top-[26px] left-[26px] flex flex-col gap-3 z-[1000]">
-            {!drawingMode && (
-              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 flex gap-4 text-xs font-bold transition-colors">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-green-700 dark:border-green-900"></div>
-                  <span className="text-gray-700 dark:text-slate-300">Has Rule</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-red-700 dark:border-red-900"></div>
-                  <span className="text-gray-700 dark:text-slate-300">No Rule</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="absolute top-[26px] right-[26px] flex flex-col z-[1000] shadow-lg rounded-md overflow-hidden border border-gray-100 dark:border-slate-700">
-            {!drawingMode && (
-              <>
-                <button
-                  onClick={() => setZoomInToggle(prev => prev + 1)}
-                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center border-b border-gray-100 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-bold text-lg"
-                  title="Zoom In"
-                >
-                  +
-                </button>
-                <button
-                  onClick={() => setZoomOutToggle(prev => prev + 1)}
-                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center border-b border-gray-100 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-bold text-lg"
-                  title="Zoom Out"
-                >
-                  −
-                </button>
-                <button
-                  onClick={handleResetMap}
-                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center group"
-                  title="Reset Map to Full Extent"
-                >
-                  <svg className="w-4 h-4 text-gray-700 dark:text-slate-300 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className={`${viewMode === 'rules' ? 'w-full md:w-1/3 border-l' : 'w-full'} h-full flex flex-col border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm z-10 overflow-hidden relative transition-all duration-300 ease-in-out`}>
+      <div className={`${viewMode === 'rules' ? 'w-full md:w-1/3 border-r' : 'w-full'} h-full flex flex-col border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm z-10 overflow-hidden relative transition-all duration-300 ease-in-out`}>
         <header className="p-6 border-b border-gray-100 dark:border-slate-800 flex flex-col gap-2">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center text-right">
             <div className="flex flex-col">
-              <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em]">Active Mission Profile</span>
               <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{mission.name}</h2>
             </div>
             {viewMode === 'rules' && (
@@ -265,7 +192,7 @@ const MissionView: React.FC<MissionViewProps> = ({
                 : 'bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
                 }`}
             >
-              Rules
+              חוקים
             </button>
             <button
               onClick={() => setViewMode('statistics')}
@@ -274,8 +201,80 @@ const MissionView: React.FC<MissionViewProps> = ({
                 : 'bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
                 }`}
             >
-              Statistics
+              סטטיסטיקה
             </button>
+          </div>
+        </div>
+      </div>
+
+      <div className={`flex-1 h-full relative transition-all duration-300 ease-in-out ${viewMode === 'rules' ? 'opacity-100 visible' : 'opacity-0 invisible absolute left-0'}`}
+        style={{ width: viewMode === 'rules' ? 'auto' : '0' }}>
+        <div className="h-full w-full p-4 min-w-[300px]">
+          <div className={`w-full h-full bg-gray-200 dark:bg-slate-800 rounded-xl overflow-hidden shadow-inner border border-gray-200 dark:border-slate-800 transition-all ${drawingMode ? 'ring-4 ring-indigo-500' : ''}`}>
+            <MapDisplay
+              geometries={missionGeometries}
+              focusedGeoId={focusedGeoId}
+              focusedRuleId={viewMode === 'rules' ? openRuleId : null}
+              rules={rules}
+              isVisible={viewMode === 'rules'}
+              onSelectAsset={onSelectSpatialAsset}
+              currentMissionId={mission.id}
+              darkMode={darkMode}
+              drawingMode={drawingMode}
+              onGeometryCaptured={handleGeometryCaptured}
+              onCancelDrawing={() => {
+                setDrawingMode(null);
+                setIsFormOpen(true);
+              }}
+              resetViewToggle={resetViewToggle}
+              zoomInToggle={zoomInToggle}
+              zoomOutToggle={zoomOutToggle}
+            />
+          </div>
+
+          <div className="absolute top-[26px] right-[26px] flex flex-col gap-3 z-[1000]">
+            {!drawingMode && (
+              <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-100 dark:border-slate-700 flex gap-4 text-xs font-bold transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-green-700 dark:border-green-900"></div>
+                  <span className="text-gray-700 dark:text-slate-300">בעל חוק</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-red-700 dark:border-red-900"></div>
+                  <span className="text-gray-700 dark:text-slate-300">חסר חוק</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="absolute top-[26px] left-[26px] flex flex-col z-[1000] shadow-lg rounded-md overflow-hidden border border-gray-100 dark:border-slate-700">
+            {!drawingMode && (
+              <>
+                <button
+                  onClick={() => setZoomInToggle(prev => prev + 1)}
+                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center border-b border-gray-100 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-bold text-lg"
+                  title="Zoom In"
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => setZoomOutToggle(prev => prev + 1)}
+                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center border-b border-gray-100 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-bold text-lg"
+                  title="Zoom Out"
+                >
+                  −
+                </button>
+                <button
+                  onClick={handleResetMap}
+                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center group"
+                  title="Reset Map to Full Extent"
+                >
+                  <svg className="w-4 h-4 text-gray-700 dark:text-slate-300 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -12,13 +12,13 @@ interface MissionSidebarProps {
 
 const MissionSidebar: React.FC<MissionSidebarProps> = ({ missions, selectedMissionId, onSelectMission, darkMode, onToggleTheme }) => {
   return (
-    <aside className="w-64 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-800 flex flex-col shadow-sm z-10 transition-colors duration-300">
+    <aside className="w-64 bg-white dark:bg-slate-900 border-r border-gray-200 dark:border-slate-800 flex flex-col shadow-sm z-10 transition-colors duration-300">
       <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
         <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
-          Control
+          משימות
         </h1>
         <button
           onClick={onToggleTheme}
@@ -37,9 +37,9 @@ const MissionSidebar: React.FC<MissionSidebarProps> = ({ missions, selectedMissi
           <button
             key={mission.id}
             onClick={() => onSelectMission(mission.id)}
-            className={`w-full text-left px-6 py-3 transition-colors flex items-center gap-3 ${selectedMissionId === mission.id
-                ? 'bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-600 dark:border-indigo-400 text-indigo-700 dark:text-indigo-300'
-                : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50'
+            className={`w-full text-right px-6 py-3 transition-colors flex items-center gap-3 ${selectedMissionId === mission.id
+              ? 'bg-indigo-50 dark:bg-indigo-900/30 border-r-4 border-indigo-600 dark:border-indigo-400 text-indigo-700 dark:text-indigo-300'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800/50'
               }`}
           >
             <div className={`w-2 h-2 rounded-full ${selectedMissionId === mission.id ? 'bg-indigo-600 dark:bg-indigo-400' : 'bg-gray-300 dark:bg-slate-700'}`} />

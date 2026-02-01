@@ -19,7 +19,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
         <svg className="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
-        <p className="text-sm italic">No rules defined for this mission.</p>
+        <p className="text-sm italic">לא הוגדרו כללים למשימה זו.</p>
       </div>
     );
   }
@@ -54,7 +54,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                   </h3>
                   {linkedGeo && (
                     <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded font-bold uppercase">
-                      Spatial
+                      משוייך לגיאוגרפיה
                     </span>
                   )}
                 </div>
@@ -83,16 +83,16 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
             </div>
 
             {isOpen && (
-              <div className="px-14 pb-6 pt-0 animate-slideDown overflow-hidden">
+              <div className="pr-14 pb-6 pt-0 animate-slideDown overflow-hidden">
                 <div className="space-y-4">
                   <div>
-                    <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">Description</span>
-                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed italic border-l-2 border-indigo-200 dark:border-indigo-900 pl-3">
+                    <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">תיאור</span>
+                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed italic border-r-2 border-indigo-200 dark:border-indigo-900 pr-3">
                       "{rule.description}"
                     </p>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">Value / Config</span>
+                    <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">ערך / הגדרה</span>
                     <div className="bg-gray-100 dark:bg-slate-800 p-2 rounded text-xs font-mono text-gray-700 dark:text-slate-300">
                       {rule.value}
                     </div>
@@ -103,7 +103,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      Centered on {linkedGeo.name}
+                      ממוקם על {linkedGeo.name}
                     </div>
                   )}
                 </div>
