@@ -292,7 +292,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse" />
               <span className="font-bold text-gray-800 dark:text-white uppercase tracking-wider text-sm">
-                משרטט {drawingMode === 'Point' ? 'נקודה' : 'שטח'}
+                משרטט {drawingMode === 'Point' ? 'נקודה' : 'פוליגון'}
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-slate-400 text-center max-w-xs">
@@ -314,7 +314,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
                   }}
                   className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors"
                 >
-                  סיום שטח
+                  סיום פוליגון
                 </button>
               )}
             </div>

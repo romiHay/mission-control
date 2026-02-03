@@ -148,7 +148,7 @@ const MissionView: React.FC<MissionViewProps> = ({
         <header className="p-6 border-b border-gray-100 dark:border-slate-800 flex flex-col gap-2">
           <div className="flex justify-between items-center text-right">
             <div className="flex flex-col">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{mission.name}</h2>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{mission.nameHebrew}</h2>
             </div>
             {viewMode === 'rules' && (
               <button

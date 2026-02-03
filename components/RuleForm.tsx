@@ -181,7 +181,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
   const selectedExistingGeo = availableGeometries.find(g => g.id === geometryId);
 
   return (
-    <div className="fixed inset-0 z-[2000] flex justify-end bg-black/20 backdrop-blur-[2px] pointer-events-none">
+    <div className="fixed inset-0 z-[2000] flex justify-end bg-black/40 backdrop-blur-[2px]">
       <div className="bg-white dark:bg-slate-900 shadow-2xl w-full max-w-md h-full overflow-hidden flex flex-col transform transition-all border-l border-gray-200 dark:border-slate-800 pointer-events-auto animate-slideInRight relative">
 
         {/* Warning Pop-up for Source Switching */}
@@ -220,7 +220,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
         <header className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-indigo-600 dark:bg-indigo-600 text-white shrink-0" dir="rtl">
           <div className="flex flex-col">
             <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">הגדרות</span>
-            <h3 className="text-xl font-bold leading-tight">{initialData ? 'עריכת כלל' : 'כלל משימה חדש'}</h3>
+            <h3 className="text-xl font-bold leading-tight">{initialData ? 'עריכת חוק קיים' : 'הגדרת חוק חדש'}</h3>
           </div>
           <button onClick={onClose} className="hover:rotate-90 transition-transform p-2">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -235,21 +235,21 @@ const RuleForm: React.FC<RuleFormProps> = ({
             {missionName === 'qa' && (
               <>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.code_name}</label>
+                  <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.code_name}</label>
                   <input required type="text" value={params.code_name || ''} onChange={e => updateParam('code_name', e.target.value)}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right"
                     placeholder="לדוגמה: QA_ZONE_1" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
                   <div className={!(params.frequency === 'חודשי' || params.frequency === 'שבועי') ? "md:col-span-2" : ""}>
-                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.frequency}</label>
+                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.frequency}</label>
                     <select
                       required
                       value={params.frequency || ''}
                       onChange={e => updateParam('frequency', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right"
                     >
-                      <option value="">בחר תדירות...</option>
+                      <option value="">בחר תדירות</option>
                       {PARAM_OPTIONS.frequency.map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
@@ -257,7 +257,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
                   </div>
                   {(params.frequency === 'חודשי' || params.frequency === 'שבועי') && (
                     <div>
-                      <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.code_type}</label>
+                      <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.code_type}</label>
                       <input required type="text" value={params.code_type || ''} onChange={e => updateParam('code_type', e.target.value)}
                         className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right"
                         placeholder="לדוגמה: VISUAL" />
@@ -266,12 +266,12 @@ const RuleForm: React.FC<RuleFormProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-right">
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.checks_amount}</label>
+                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.checks_amount}</label>
                     <input required type="number" value={params.checks_amount || ''} onChange={e => updateParam('checks_amount', parseInt(e.target.value))}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.check_precent} (%)</label>
+                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.check_precent} (%)</label>
                     <input required type="number" value={params.check_precent || ''} onChange={e => updateParam('check_precent', parseInt(e.target.value))}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right" />
                   </div>
@@ -283,24 +283,24 @@ const RuleForm: React.FC<RuleFormProps> = ({
               <>
                 <div className="grid grid-cols-2 gap-4 text-right">
                   <div className="col-span-2">
-                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.nm_values}</label>
+                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.nm_values}</label>
                     <input required type="text" value={params.nm_values || ''} onChange={e => updateParam('nm_values', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.type}</label>
+                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.type}</label>
                     <input required type="text" value={params.type || ''} onChange={e => updateParam('type', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.status}</label>
+                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.status}</label>
                     <select
                       required
                       value={params.status || ''}
                       onChange={e => updateParam('status', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right"
                     >
-                      <option value="">בחר סטטוס...</option>
+                      <option value="">בחר סטטוס</option>
                       {PARAM_OPTIONS.status.map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
@@ -309,18 +309,18 @@ const RuleForm: React.FC<RuleFormProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-right">
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.mpt_values}</label>
+                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.mpt_values}</label>
                     <input required type="text" value={params.mpt_values || ''} onChange={e => updateParam('mpt_values', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.h_values}</label>
+                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.h_values}</label>
                     <input required type="text" value={params.h_values || ''} onChange={e => updateParam('h_values', e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.nm_id}</label>
+                  <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.nm_id}</label>
                   <input required type="text" value={params.nm_id || ''} onChange={e => updateParam('nm_id', e.target.value)}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
                 </div>
@@ -330,13 +330,13 @@ const RuleForm: React.FC<RuleFormProps> = ({
             {!['qa', 'new_missions'].includes(missionName) && (
               <>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Rule Identification</label>
+                  <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">Rule Identification</label>
                   <input required type="text" value={name} onChange={e => setName(e.target.value)}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400"
                     placeholder="e.g. Zone A Restriction" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Deployment Instructions</label>
+                  <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">Deployment Instructions</label>
                   <textarea required rows={3} value={description} onChange={e => setDescription(e.target.value)}
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none placeholder:text-gray-400"
                     placeholder="Provide details..." />
@@ -383,7 +383,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
                   onChange={e => setGeometryId(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 >
-                  <option value="">בחר נכס מרחבי...</option>
+                  <option value="">בחר גיאוגרפיה קיימת</option>
                   {availableGeometries.map(geo => (
                     <option key={geo.id} value={geo.id} disabled={!!geo.ruleId && geo.ruleId !== initialData?.id} className="text-right">
                       {geo.name} {geo.ruleId && geo.ruleId !== initialData?.id ? '(משויך)' : ''}
@@ -466,7 +466,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
                         </svg>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest">שרטט שטח</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">שרטט פוליגון</span>
                     </button>
                   </div>
                 )}

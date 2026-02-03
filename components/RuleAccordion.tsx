@@ -86,13 +86,13 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
               <div className="pr-14 pb-6 pt-0 animate-slideDown overflow-hidden">
                 <div className="space-y-4">
                   <div>
-                    <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">תיאור</span>
+                    <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">תיאור</span>
                     <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed italic border-r-2 border-indigo-200 dark:border-indigo-900 pr-3">
                       "{rule.description}"
                     </p>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">לוגיקה תפעולית</span>
+                    <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">לוגיקה תפעולית</span>
                     <div className="bg-gray-100 dark:bg-slate-800 p-2 rounded text-xs font-mono text-gray-700 dark:text-slate-300">
                       {rule.value}
                     </div>
