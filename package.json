@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "db:migrate": "tsx db_server/migrate.ts",
-    "server": "tsx db_server/server.ts"
+    "server": "tsx watch db_server/server.ts",
+    "hmr": "powershell (ls App.tsx).LastWriteTime = Get-Date"
   },
   "dependencies": {
     "@google/genai": "^1.38.0",

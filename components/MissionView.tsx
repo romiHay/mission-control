@@ -73,7 +73,7 @@ const MissionView: React.FC<MissionViewProps> = ({
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this rule?')) {
+    if (confirm('האם אתה בטוח שברצונך למחוק את הכלל הזה?')) {
       onDeleteRule(id);
       if (openRuleId === id) setOpenRuleId(null);
     }
@@ -249,31 +249,15 @@ const MissionView: React.FC<MissionViewProps> = ({
 
           <div className="absolute top-[26px] left-[26px] flex flex-col z-[1000] shadow-lg rounded-md overflow-hidden border border-gray-100 dark:border-slate-700">
             {!drawingMode && (
-              <>
-                <button
-                  onClick={() => setZoomInToggle(prev => prev + 1)}
-                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center border-b border-gray-100 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-bold text-lg"
-                  title="Zoom In"
-                >
-                  +
-                </button>
-                <button
-                  onClick={() => setZoomOutToggle(prev => prev + 1)}
-                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center border-b border-gray-100 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-bold text-lg"
-                  title="Zoom Out"
-                >
-                  −
-                </button>
-                <button
-                  onClick={handleResetMap}
-                  className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center group"
-                  title="Reset Map to Full Extent"
-                >
-                  <svg className="w-4 h-4 text-gray-700 dark:text-slate-300 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
-                </button>
-              </>
+              <button
+                onClick={handleResetMap}
+                className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center group"
+                title="אפס תצוגת מפה"
+              >
+                <svg className="w-4 h-4 text-gray-700 dark:text-slate-300 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              </button>
             )}
           </div>
         </div>

@@ -7,6 +7,16 @@ async function migrate() {
 
     await initDB();
 
+    console.log('Cleaning existing data for a fresh seed...');
+    await pool.query('DELETE FROM web_general.geometry_to_team');
+    await pool.query('DELETE FROM web_general.user_to_team');
+    await pool.query('DELETE FROM missions.qa');
+    await pool.query('DELETE FROM missions.new_missions');
+    await pool.query('DELETE FROM web_general.geometries');
+    await pool.query('DELETE FROM web_general.missions_data');
+    await pool.query('DELETE FROM web_general.users');
+    await pool.query('DELETE FROM web_general.teams');
+
     console.log('Seeding web_general tables...');
 
     const missionUuids: string[] = [];
@@ -82,14 +92,30 @@ async function migrate() {
     }
 
     // Seed geometry_to_team (Relationships between Geometries, Missions, and Teams)
-    for (const geoUuid of geometryUuids) {
-        // Link each geometry to a random mission and a random team
-        const randomMission = missionUuids[Math.floor(Math.random() * missionUuids.length)];
+    // We want 1 geometry to each mission as default
+    for (let i = 0; i < missionUuids.length; i++) {
+        const missionUuid = missionUuids[i];
+        // Use geometries sequentially, looping back if we have more missions than geometries
+        const geoUuid = geometryUuids[i % geometryUuids.length];
         const randomTeam = teamUuids[Math.floor(Math.random() * teamUuids.length)];
+
         await pool.query(
             'INSERT INTO web_general.geometry_to_team (geometry_uuid, mission_uuid, team_uuid) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
-            [geoUuid, randomMission, randomTeam]
+            [geoUuid, missionUuid, randomTeam]
         );
+    }
+
+    // Link any remaining geometries to random missions
+    if (geometryUuids.length > missionUuids.length) {
+        for (let i = missionUuids.length; i < geometryUuids.length; i++) {
+            const geoUuid = geometryUuids[i];
+            const randomMission = missionUuids[Math.floor(Math.random() * missionUuids.length)];
+            const randomTeam = teamUuids[Math.floor(Math.random() * teamUuids.length)];
+            await pool.query(
+                'INSERT INTO web_general.geometry_to_team (geometry_uuid, mission_uuid, team_uuid) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+                [geoUuid, randomMission, randomTeam]
+            );
+        }
     }
 
     console.log('Web general seeding complete.');

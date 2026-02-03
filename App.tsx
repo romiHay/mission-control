@@ -48,7 +48,16 @@ const App: React.FC = () => {
   }, [selectedMissionId]);
 
   useEffect(() => {
+    // Initial fetch
     fetchData();
+
+    // Set up polling interval (every 5 seconds)
+    const interval = setInterval(() => {
+      console.log('Auto-updating data from DB...');
+      fetchData();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [fetchData]);
 
   // --- THEME HANDLING ---
