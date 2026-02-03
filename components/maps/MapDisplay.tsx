@@ -41,6 +41,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const geoLayersRef = useRef<Record<string, L.Layer>>({}); // Stores references to active geometry layers
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const hasInitializedViewRef = useRef(false);
 
   // Drawing Refs: used for tracking mouse movement and click points during creation
   const drawPointsRef = useRef<[number, number][]>([]);
@@ -250,11 +251,17 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       geoLayersRef.current[geo.id] = layer;
     });
 
-    // Initial load behavior
-    if (geometries.length > 0 && !focusedGeoId && !focusedRuleId && !drawingMode) {
+    // Initial load behavior: Only fit bounds once per mission load
+    if (geometries.length > 0 && !focusedGeoId && !focusedRuleId && !drawingMode && !hasInitializedViewRef.current) {
       fitMissionBounds();
+      hasInitializedViewRef.current = true;
     }
-  }, [geometries, rules, darkMode, currentMissionId, fitMissionBounds]);
+  }, [geometries, rules, darkMode, currentMissionId, fitMissionBounds, focusedGeoId, focusedRuleId, drawingMode]);
+
+  // Reset initialization flag when switching missions
+  useEffect(() => {
+    hasInitializedViewRef.current = false;
+  }, [currentMissionId]);
 
   // Focus Zoom (triggered by manual interactions or selecting a rule from the list)
   useEffect(() => {
