@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Rule, MissionGeometry, GeometryType } from '../types';
-import GeometryMiniMap from './GeometryMiniMap';
+import { PARAM_LABELS, PARAM_OPTIONS } from '../utils/constants';
+import GenericFormField from './GenericFormField';
+import SpatialAttachmentSection from './SpatialAttachmentSection';
 
 interface RuleFormProps {
   missionId: string;
-  missionName: string; // Add this to know if it's 'qa' or 'new_missions'
+  missionName: string;
   initialData?: Rule;
   onClose: () => void;
   onSave: (rule: Rule) => void;
@@ -19,29 +21,42 @@ interface RuleFormProps {
   darkMode: boolean;
 }
 
-// RuleForm is the sliding sidebar where users configure mission rules.
-// It handles metadata (name, instructions) and spatial attachment logic.
-const PARAM_LABELS: Record<string, string> = {
-  // QA Mission fields
-  code_name: 'שם קוד',
-  frequency: 'תדירות',
-  code_type: 'סוג קוד',
-  checks_amount: 'כמות בדיקות',
-  check_precent: 'אחוז בדיקה',
+const GenericInput: React.FC<{
+  value: any;
+  onChange: (val: any) => void;
+  placeholder?: string;
+  type?: string;
+  required?: boolean;
+}> = ({ value, onChange, placeholder, type = "text", required = true }) => (
+  <input
+    required={required}
+    type={type}
+    value={value || ''}
+    onChange={e => onChange(type === 'number' ? parseInt(e.target.value) : e.target.value)}
+    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right"
+    placeholder={placeholder}
+  />
+);
 
-  // New Missions fields
-  nm_values: 'ערכי NM',
-  status: 'סטטוס',
-  type: 'סוג',
-  mpt_values: 'ערכי MPT',
-  h_values: 'ערכי H',
-  nm_id: 'מזהה NM'
-};
-const PARAM_OPTIONS: Record<string, string[]> = {
-  frequency: ['יומי', 'שבועי', 'שעתי', 'חודשי'],
-  status: ['פעיל', 'ממתין', 'הושלם', 'מבוטל'],
-  code_type: ['VISUAL', 'SENSOR', 'MANUAL']
-};
+const GenericSelect: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  options: string[];
+  placeholder: string;
+  required?: boolean;
+}> = ({ value, onChange, options, placeholder, required = true }) => (
+  <select
+    required={required}
+    value={value || ''}
+    onChange={e => onChange(e.target.value)}
+    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right"
+  >
+    <option value="">{placeholder}</option>
+    {options.map(opt => (
+      <option key={opt} value={opt}>{opt}</option>
+    ))}
+  </select>
+);
 
 const RuleForm: React.FC<RuleFormProps> = ({
   missionId,
@@ -58,66 +73,37 @@ const RuleForm: React.FC<RuleFormProps> = ({
   onGeometryCaptured,
   darkMode
 }) => {
-  // --- STATE MANAGEMENT ---
-  // Generic fields used as fallback/label
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [value, setValue] = useState(initialData?.value || '');
   const [geometryId, setGeometryId] = useState(initialData?.geometryId || '');
-
-  // DB specific fields (parameters)
   const [params, setParams] = useState<Record<string, any>>(initialData?.parameters || {});
+  const [geoSource, setGeoSource] = useState<'existing' | 'new' | 'none'>(
+    initialData?.geometryId ? 'existing' : (isNewGeometryCaptured || !!tempGeometryType) ? 'new' : 'none'
+  );
+  const [isDrawingInline, setIsDrawingInline] = useState(false);
+  const [pendingSource, setPendingSource] = useState<'existing' | 'new' | 'none' | null>(null);
+  const [pendingType, setPendingType] = useState<GeometryType | null>(null);
+  const [showConfirmSwitch, setShowConfirmSwitch] = useState(false);
 
-  // Initialize params based on missionName if new rule
   useEffect(() => {
     if (!initialData) {
       if (missionName === 'qa') {
-        setParams({
-          code_name: '',
-          frequency: '',
-          code_type: '',
-          checks_amount: 1,
-          check_precent: 100
-        });
+        setParams({ code_name: '', frequency: '', code_type: '', checks_amount: 1, check_precent: 100 });
       } else if (missionName === 'new_missions') {
-        setParams({
-          nm_values: '',
-          status: 'pending',
-          type: '',
-          mpt_values: '',
-          h_values: '',
-          nm_id: ''
-        });
+        setParams({ nm_values: '', status: '', type: '', mpt_values: '', h_values: '', nm_id: '' });
       }
     }
   }, [missionName, initialData]);
 
   const updateParam = (key: string, val: any) => {
     setParams(prev => ({ ...prev, [key]: val }));
-    // Update generic name/desc for UI if applicable
     if (key === 'code_name' || key === 'nm_values') setName(val);
     if (key === 'frequency' || key === 'status') setDescription(val);
   };
 
-  // geoSource tracks if we use an 'existing' asset, a 'new' drawing, or 'none'.
-  const [geoSource, setGeoSource] = useState<'existing' | 'new' | 'none'>(
-    initialData?.geometryId ? 'existing' : (isNewGeometryCaptured || !!tempGeometryType) ? 'new' : 'none'
-  );
-
-  // tracks if the user is currently interacting with the mini-map drawing tools
-  const [isDrawingInline, setIsDrawingInline] = useState(false);
-
-  // --- CONFIRMATION LOGIC ---
-  // To prevent accidental data loss, we show a dialog when switching modes with unsaved work.
-  const [pendingSource, setPendingSource] = useState<'existing' | 'new' | 'none' | null>(null);
-  const [pendingType, setPendingType] = useState<GeometryType | null>(null);
-  const [showConfirmSwitch, setShowConfirmSwitch] = useState(false);
-
-  // Triggered when clicking 'Existing', 'New', or 'None' tabs
   const handleSourceChangeRequest = (newSource: 'existing' | 'new' | 'none') => {
     if (newSource === geoSource) return;
-
-    // Check if switching from an active selection to something else
     const hasUnsavedWork = (geoSource === 'new' && isNewGeometryCaptured) ||
       (geoSource === 'existing' && geometryId && geometryId !== initialData?.geometryId);
 
@@ -135,7 +121,6 @@ const RuleForm: React.FC<RuleFormProps> = ({
 
   const handleTypeChangeRequest = (newType: GeometryType) => {
     if (newType === tempGeometryType) return;
-
     if (isNewGeometryCaptured) {
       setPendingType(newType);
       setPendingSource(null);
@@ -147,24 +132,22 @@ const RuleForm: React.FC<RuleFormProps> = ({
     }
   };
 
-  // Finalizes the switch if the user clicks 'Continue' in the warning dialog
-  const confirmSourceChange = () => {
+  const confirmChange = () => {
     if (pendingSource) {
       setGeoSource(pendingSource);
       if (pendingSource !== 'existing') setGeometryId('');
       if (pendingSource !== 'new') onClearTempGeometry();
       setIsDrawingInline(false);
-      setPendingSource(null);
     } else if (pendingType) {
       onClearTempGeometry();
       onStartDrawing(pendingType);
       setIsDrawingInline(true);
-      setPendingType(null);
     }
     setShowConfirmSwitch(false);
+    setPendingSource(null);
+    setPendingType(null);
   };
 
-  // --- FORM SUBMISSION ---
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
@@ -178,13 +161,10 @@ const RuleForm: React.FC<RuleFormProps> = ({
     });
   };
 
-  const selectedExistingGeo = availableGeometries.find(g => g.id === geometryId);
-
   return (
     <div className="fixed inset-0 z-[2000] flex justify-end bg-black/40 backdrop-blur-[2px]">
-      <div className="bg-white dark:bg-slate-900 shadow-2xl w-full max-w-md h-full overflow-hidden flex flex-col transform transition-all border-l border-gray-200 dark:border-slate-800 pointer-events-auto animate-slideInRight relative">
+      <div className="bg-white dark:bg-slate-900 shadow-2xl w-full max-w-md h-full overflow-hidden flex flex-col transform transition-all border-l border-gray-200 dark:border-slate-800 pointer-events-auto animate-slideInRight relative font-heebo">
 
-        {/* Warning Pop-up for Source Switching */}
         {showConfirmSwitch && (
           <div className="absolute inset-0 z-[2100] bg-white/95 dark:bg-slate-900/95 backdrop-blur flex items-center justify-center p-8 animate-fadeIn">
             <div className="max-w-xs text-center space-y-4">
@@ -194,33 +174,21 @@ const RuleForm: React.FC<RuleFormProps> = ({
                 </svg>
               </div>
               <h4 className="text-lg font-black text-gray-800 dark:text-white uppercase tracking-tight">ביטול שינויים?</h4>
-              <p className="text-sm text-gray-500 dark:text-slate-400 font-medium whitespace-pre-line">
-                {pendingSource
-                  ? "שינוי מצב השיוך המרחבי יביא לביטול השרטוט או הבחירה הנוכחיים."
-                  : "החלפת סוג הגיאומטריה תביא לביטול השרטוט הנוכחי."}
+              <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">
+                {pendingSource ? "שינוי מצב השיוך המרחבי יביא לביטול השרטוט או הבחירה הנוכחיים." : "החלפת סוג הגיאומטריה תביא לביטול השרטוט הנוכחי."}
               </p>
               <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => setShowConfirmSwitch(false)}
-                  className="flex-1 px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-lg text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-colors"
-                >
-                  הישאר
-                </button>
-                <button
-                  onClick={confirmSourceChange}
-                  className="flex-1 px-4 py-3 bg-amber-600 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-all active:scale-95"
-                >
-                  המשך
-                </button>
+                <button onClick={() => setShowConfirmSwitch(false)} className="flex-1 px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-lg text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-colors">הישאר</button>
+                <button onClick={confirmChange} className="flex-1 px-4 py-3 bg-amber-600 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-all active:scale-95">המשך</button>
               </div>
             </div>
           </div>
         )}
 
-        <header className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-indigo-600 dark:bg-indigo-600 text-white shrink-0" dir="rtl">
+        <header className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-indigo-600 text-white shrink-0" dir="rtl">
           <div className="flex flex-col">
             <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">הגדרות</span>
-            <h3 className="text-xl font-bold leading-tight">{initialData ? 'עריכת חוק קיים' : 'הגדרת חוק חדש'}</h3>
+            <h3 className="text-xl font-bold leading-tight">{initialData ? 'עריכת חוק קיים' : 'הוספת חוק חדש'}</h3>
           </div>
           <button onClick={onClose} className="hover:rotate-90 transition-transform p-2">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,283 +198,87 @@ const RuleForm: React.FC<RuleFormProps> = ({
         </header>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar text-right" dir="rtl">
-          {/* DYNAMIC DB FIELDS */}
           <div className="space-y-4">
             {missionName === 'qa' && (
               <>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.code_name}</label>
-                  <input required type="text" value={params.code_name || ''} onChange={e => updateParam('code_name', e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right"
-                    placeholder="לדוגמה: QA_ZONE_1" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-right">
-                  <div className={!(params.frequency === 'חודשי' || params.frequency === 'שבועי') ? "md:col-span-2" : ""}>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.frequency}</label>
-                    <select
-                      required
-                      value={params.frequency || ''}
-                      onChange={e => updateParam('frequency', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right"
-                    >
-                      <option value="">בחר תדירות</option>
-                      {PARAM_OPTIONS.frequency.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </div>
+                <GenericFormField label={PARAM_LABELS.code_name}>
+                  <GenericInput value={params.code_name} onChange={v => updateParam('code_name', v)} placeholder="לדוגמה: QA_ZONE_1" />
+                </GenericFormField>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <GenericFormField label={PARAM_LABELS.frequency} fullWidth={!(params.frequency === 'חודשי' || params.frequency === 'שבועי')}>
+                    <GenericSelect value={params.frequency} onChange={v => updateParam('frequency', v)} options={PARAM_OPTIONS.frequency} placeholder="בחר תדירות" />
+                  </GenericFormField>
                   {(params.frequency === 'חודשי' || params.frequency === 'שבועי') && (
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.code_type}</label>
-                      <input required type="text" value={params.code_type || ''} onChange={e => updateParam('code_type', e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right"
-                        placeholder="לדוגמה: VISUAL" />
-                    </div>
+                    <GenericFormField label={PARAM_LABELS.code_type}>
+                      <GenericInput value={params.code_type} onChange={v => updateParam('code_type', v)} placeholder="לדוגמה: VISUAL" />
+                    </GenericFormField>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-right">
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.checks_amount}</label>
-                    <input required type="number" value={params.checks_amount || ''} onChange={e => updateParam('checks_amount', parseInt(e.target.value))}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.check_precent} (%)</label>
-                    <input required type="number" value={params.check_precent || ''} onChange={e => updateParam('check_precent', parseInt(e.target.value))}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right" />
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <GenericFormField label={PARAM_LABELS.checks_amount}>
+                    <GenericInput type="number" value={params.checks_amount} onChange={v => updateParam('checks_amount', v)} />
+                  </GenericFormField>
+                  <GenericFormField label={PARAM_LABELS.check_precent + " (%)"}>
+                    <GenericInput type="number" value={params.check_precent} onChange={v => updateParam('check_precent', v)} />
+                  </GenericFormField>
                 </div>
               </>
             )}
 
             {missionName === 'new_missions' && (
-              <>
-                <div className="grid grid-cols-2 gap-4 text-right">
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.nm_values}</label>
-                    <input required type="text" value={params.nm_values || ''} onChange={e => updateParam('nm_values', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.type}</label>
-                    <input required type="text" value={params.type || ''} onChange={e => updateParam('type', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.status}</label>
-                    <select
-                      required
-                      value={params.status || ''}
-                      onChange={e => updateParam('status', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right"
-                    >
-                      <option value="">בחר סטטוס</option>
-                      {PARAM_OPTIONS.status.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-right">
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.mpt_values}</label>
-                    <input required type="text" value={params.mpt_values || ''} onChange={e => updateParam('mpt_values', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.h_values}</label>
-                    <input required type="text" value={params.h_values || ''} onChange={e => updateParam('h_values', e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">{PARAM_LABELS.nm_id}</label>
-                  <input required type="text" value={params.nm_id || ''} onChange={e => updateParam('nm_id', e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right" />
-                </div>
-              </>
-            )}
-
-            {!['qa', 'new_missions'].includes(missionName) && (
-              <>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">Rule Identification</label>
-                  <input required type="text" value={name} onChange={e => setName(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400"
-                    placeholder="e.g. Zone A Restriction" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 mb-1.5 uppercase tracking-[0.2em]">Deployment Instructions</label>
-                  <textarea required rows={3} value={description} onChange={e => setDescription(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none placeholder:text-gray-400"
-                    placeholder="Provide details..." />
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex justify-between items-end">
-              <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em]">שיוך מרחבי</label>
-              {geoSource === 'new' && isDrawingInline && (
-                <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1 animate-pulse">
-                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
-                  שרטוט חי
-                </span>
-              )}
-            </div>
-
-            <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
-              {(['none', 'existing', 'new'] as const).map(source => {
-                const labelMap = {
-                  'none': 'ללא',
-                  'existing': 'קיים',
-                  'new': 'חדש'
-                };
-                return (
-                  <button
-                    key={source}
-                    type="button"
-                    onClick={() => handleSourceChangeRequest(source)}
-                    className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${geoSource === source ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-gray-500 hover:bg-gray-200/50 dark:hover:bg-slate-700/50'}`}
-                  >
-                    {labelMap[source]}
-                  </button>
-                );
-              })}
-            </div>
-
-            {geoSource === 'existing' && (
-              <div className="space-y-3">
-                <select
-                  value={geometryId}
-                  onChange={e => setGeometryId(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                >
-                  <option value="">בחר גיאוגרפיה קיימת</option>
-                  {availableGeometries.map(geo => (
-                    <option key={geo.id} value={geo.id} disabled={!!geo.ruleId && geo.ruleId !== initialData?.id} className="text-right">
-                      {geo.name} {geo.ruleId && geo.ruleId !== initialData?.id ? '(משויך)' : ''}
-                    </option>
-                  ))}
-                </select>
-
-                <GeometryMiniMap
-                  type={selectedExistingGeo?.type || 'Point'}
-                  coordinates={selectedExistingGeo?.coordinates}
-                  onGeometryCaptured={() => { }}
-                  isDrawing={false}
-                  onCancelDrawing={() => { }}
-                  darkMode={darkMode}
-                />
-              </div>
-            )}
-
-            {geoSource === 'new' && (
-              <div className="space-y-4">
-                {(isNewGeometryCaptured || isDrawingInline) ? (
-                  <div className="space-y-3">
-                    <GeometryMiniMap
-                      type={tempGeometryType || 'Point'}
-                      coordinates={tempGeometryCoords}
-                      onGeometryCaptured={(coords) => {
-                        onGeometryCaptured(tempGeometryType || 'Point', coords);
-                        setIsDrawingInline(false);
-                      }}
-                      isDrawing={isDrawingInline}
-                      onCancelDrawing={() => setIsDrawingInline(false)}
-                      darkMode={darkMode}
-                    />
-
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setIsDrawingInline(!isDrawingInline)}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${isDrawingInline ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-100'}`}
-                      >
-                        {isDrawingInline ? 'עצור שרטוט' : (isNewGeometryCaptured ? 'שרטט מחדש' : 'התחל שרטוט')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleTypeChangeRequest(tempGeometryType === 'Point' ? 'Polygon' : 'Point')}
-                        className="px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-100 transition-all text-[10px] font-black uppercase tracking-widest"
-                      >
-                        החלף ל{tempGeometryType === 'Point' ? 'שטח' : 'נקודה'}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onStartDrawing('Point');
-                        setIsDrawingInline(true);
-                      }}
-                      className="flex flex-col items-center gap-3 p-5 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all text-gray-400 hover:text-indigo-600 group"
-                    >
-                      <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest">שרטט נקודה</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onStartDrawing('Polygon');
-                        setIsDrawingInline(true);
-                      }}
-                      className="flex flex-col items-center gap-3 p-5 border-2 border-dashed border-gray-200 dark:border-slate-800 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-all text-gray-400 hover:text-indigo-600 group"
-                    >
-                      <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                        </svg>
-                      </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest">שרטט פוליגון</span>
-                    </button>
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-4">
+                <GenericFormField label={PARAM_LABELS.nm_values} fullWidth>
+                  <GenericInput value={params.nm_values} onChange={v => updateParam('nm_values', v)} />
+                </GenericFormField>
+                <GenericFormField label={PARAM_LABELS.type}>
+                  <GenericInput value={params.type} onChange={v => updateParam('type', v)} />
+                </GenericFormField>
+                <GenericFormField label={PARAM_LABELS.status}>
+                  <GenericSelect value={params.status} onChange={v => updateParam('status', v)} options={PARAM_OPTIONS.status} placeholder="בחר סטטוס" />
+                </GenericFormField>
+                <GenericFormField label={PARAM_LABELS.mpt_values}>
+                  <GenericInput value={params.mpt_values} onChange={v => updateParam('mpt_values', v)} />
+                </GenericFormField>
+                <GenericFormField label={PARAM_LABELS.h_values}>
+                  <GenericInput value={params.h_values} onChange={v => updateParam('h_values', v)} />
+                </GenericFormField>
+                <GenericFormField label={PARAM_LABELS.nm_id} fullWidth>
+                  <GenericInput value={params.nm_id} onChange={v => updateParam('nm_id', v)} />
+                </GenericFormField>
               </div>
             )}
           </div>
 
-          <div className="pt-2">
-            <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">לוגיקה תפעולית</label>
-            <input
-              required
-              type="text"
-              value={value}
-              onChange={e => setValue(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right"
-              placeholder="לדוגמה: הגבלת גובה 10 מטר"
-            />
-          </div>
+          <SpatialAttachmentSection
+            geoSource={geoSource}
+            onSourceChange={handleSourceChangeRequest}
+            geometryId={geometryId}
+            setGeometryId={setGeometryId}
+            availableGeometries={availableGeometries}
+            initialDataId={initialData?.id}
+            isDrawingInline={isDrawingInline}
+            setIsDrawingInline={setIsDrawingInline}
+            tempGeometryType={tempGeometryType}
+            tempGeometryCoords={tempGeometryCoords}
+            isNewGeometryCaptured={isNewGeometryCaptured}
+            onStartDrawing={onStartDrawing}
+            onClearTempGeometry={onClearTempGeometry}
+            onGeometryCaptured={onGeometryCaptured}
+            handleTypeChangeRequest={handleTypeChangeRequest}
+            darkMode={darkMode}
+          />
+
+          <GenericFormField label="לוגיקה תפעולית">
+            <GenericInput value={value} onChange={setValue} placeholder="לדוגמה: הגבלת גובה 10 מטר" />
+          </GenericFormField>
         </form>
 
         <footer className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/30 flex gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 px-6 py-3.5 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 transition-all active:scale-95"
-          >
-            ביטול
-          </button>
-          <button
-            onClick={(e) => {
-              const form = (e.target as HTMLElement).closest('div').parentElement?.querySelector('form');
-              if (form) form.requestSubmit();
-            }}
-            className="flex-1 px-6 py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-200 dark:shadow-none transition-all active:scale-95"
-          >
-            שמירה
-          </button>
+          <button onClick={onClose} className="flex-1 px-6 py-3.5 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-500 hover:bg-white transition-all active:scale-95">ביטול</button>
+          <button onClick={() => document.querySelector('form')?.requestSubmit()} className="flex-1 px-6 py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all active:scale-95">שמירה</button>
         </footer>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 
