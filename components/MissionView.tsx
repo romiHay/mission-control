@@ -282,6 +282,7 @@ const MissionView: React.FC<MissionViewProps> = ({
       {isFormOpen && (
         <RuleForm
           missionId={mission.id}
+          missionName={mission.name}
           initialData={editingRule}
           onClose={() => setIsFormOpen(false)}
           onSave={handleSaveRule}

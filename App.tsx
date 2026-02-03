@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Mission, Rule, MissionGeometry } from './types';
 import MissionSidebar from './components/MissionSidebar';
 import MissionView from './components/MissionView';
-import { INITIAL_MISSIONS, INITIAL_GEOMETRIES, INITIAL_RULES } from './mockData';
 
 // --- APPLICATION ARCHITECTURE ---
 // App.tsx is the root component that manages the global state for the entire mission control.
@@ -13,14 +12,44 @@ import { INITIAL_MISSIONS, INITIAL_GEOMETRIES, INITIAL_RULES } from './mockData'
 // 3. Global Dark Mode/Theme state.
 const App: React.FC = () => {
   // Global data stores
-  const [missions, setMissions] = useState<Mission[]>(INITIAL_MISSIONS);
-  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(INITIAL_MISSIONS[0].id);
-  const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
-  const [geometries, setGeometries] = useState<MissionGeometry[]>(INITIAL_GEOMETRIES);
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [geometries, setGeometries] = useState<MissionGeometry[]>([]);
 
   // Cross-component UI state (shared between sidebar, map, and form)
   const [activeRuleId, setActiveRuleId] = useState<string | null>(null);
   const [focusedGeoId, setFocusedGeoId] = useState<string | null>(null);
+
+  // --- FETCH DATA ---
+  const fetchData = useCallback(async () => {
+    try {
+      console.log('Fetching live data from PostgreSQL...');
+      const [missionsRes, geometriesRes, rulesRes] = await Promise.all([
+        fetch('http://localhost:3001/api/missions'),
+        fetch('http://localhost:3001/api/geometries'),
+        fetch('http://localhost:3001/api/rules')
+      ]);
+
+      const missionsData = await missionsRes.json();
+      const geometriesData = await geometriesRes.json();
+      const rulesData = await rulesRes.json();
+
+      setMissions(missionsData);
+      setGeometries(geometriesData);
+      setRules(rulesData);
+
+      if (missionsData.length > 0 && !selectedMissionId) {
+        setSelectedMissionId(missionsData[0].id);
+      }
+    } catch (err) {
+      console.error('SERVER ERROR: Ensure PostgreSQL is running and you started the app with "npm run dev"', err);
+    }
+  }, [selectedMissionId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // --- THEME HANDLING ---
   // Tracks Dark/Light mode and persists the preference in localStorage
@@ -47,37 +76,49 @@ const App: React.FC = () => {
     setFocusedGeoId(geoId || null);
   };
 
-  const handleAddRule = (newRule: Rule, newGeo?: MissionGeometry) => {
-    if (newGeo) {
-      setGeometries(prev => [...prev, newGeo]);
-    }
-    setRules(prev => [...prev, newRule]);
+  const handleAddRule = async (newRule: Rule, newGeo?: MissionGeometry) => {
+    try {
+      // Optimistic update (optional, but good for UX)
+      // For now, let's just do the DB call and refresh
+      const response = await fetch('http://localhost:3001/api/rules', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rule: newRule, newGeo }),
+      });
 
-    // Link existing geometry if provided but not a brand new one
-    if (!newGeo && newRule.geometryId) {
-      setGeometries(prev => prev.map(g =>
-        g.id === newRule.geometryId ? { ...g, ruleId: newRule.id } : g
-      ));
+      if (!response.ok) {
+        throw new Error('Failed to save rule to DB');
+      }
+
+      console.log('Rule saved to DB, refreshing data...');
+      await fetchData();
+    } catch (err) {
+      console.error('Error adding rule:', err);
+      // Fallback to local state if DB fails (already handled by error log)
     }
   };
 
-  const handleUpdateRule = (updatedRule: Rule, newGeo?: MissionGeometry) => {
-    if (newGeo) {
-      setGeometries(prev => [...prev, newGeo]);
-    }
+  const handleUpdateRule = async (updatedRule: Rule, newGeo?: MissionGeometry) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/rules/${updatedRule.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rule: updatedRule, newGeo }),
+      });
 
-    setRules(prev => prev.map(r => r.id === updatedRule.id ? updatedRule : r));
-    setGeometries(prev => prev.map(g => {
-      // Clear old link if geometry changed
-      if (g.ruleId === updatedRule.id && g.id !== updatedRule.geometryId) {
-        return { ...g, ruleId: undefined };
+      if (!response.ok) {
+        throw new Error('Failed to update rule in DB');
       }
-      // Link new geometry
-      if (g.id === updatedRule.geometryId) {
-        return { ...g, ruleId: updatedRule.id };
-      }
-      return g;
-    }));
+
+      console.log('Rule updated in DB, refreshing data...');
+      await fetchData();
+    } catch (err) {
+      console.error('Error updating rule:', err);
+    }
   };
 
   const handleDeleteRule = (ruleId: string) => {

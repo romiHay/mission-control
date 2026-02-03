@@ -5,6 +5,7 @@ import GeometryMiniMap from './GeometryMiniMap';
 
 interface RuleFormProps {
   missionId: string;
+  missionName: string; // Add this to know if it's 'qa' or 'new_missions'
   initialData?: Rule;
   onClose: () => void;
   onSave: (rule: Rule) => void;
@@ -22,6 +23,7 @@ interface RuleFormProps {
 // It handles metadata (name, instructions) and spatial attachment logic.
 const RuleForm: React.FC<RuleFormProps> = ({
   missionId,
+  missionName,
   initialData,
   onClose,
   onSave,
@@ -35,10 +37,45 @@ const RuleForm: React.FC<RuleFormProps> = ({
   darkMode
 }) => {
   // --- STATE MANAGEMENT ---
+  // Generic fields used as fallback/label
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [value, setValue] = useState(initialData?.value || '');
   const [geometryId, setGeometryId] = useState(initialData?.geometryId || '');
+
+  // DB specific fields (parameters)
+  const [params, setParams] = useState<Record<string, any>>(initialData?.parameters || {});
+
+  // Initialize params based on missionName if new rule
+  useEffect(() => {
+    if (!initialData) {
+      if (missionName === 'qa') {
+        setParams({
+          code_name: '',
+          frequency: '',
+          code_type: '',
+          checks_amount: 1,
+          check_precent: 100
+        });
+      } else if (missionName === 'new_missions') {
+        setParams({
+          nm_values: '',
+          status: 'pending',
+          type: '',
+          mpt_values: '',
+          h_values: '',
+          nm_id: ''
+        });
+      }
+    }
+  }, [missionName, initialData]);
+
+  const updateParam = (key: string, val: any) => {
+    setParams(prev => ({ ...prev, [key]: val }));
+    // Update generic name/desc for UI if applicable
+    if (key === 'code_name' || key === 'nm_values') setName(val);
+    if (key === 'frequency' || key === 'status') setDescription(val);
+  };
 
   // geoSource tracks if we use an 'existing' asset, a 'new' drawing, or 'none'.
   const [geoSource, setGeoSource] = useState<'existing' | 'new' | 'none'>(
@@ -111,10 +148,11 @@ const RuleForm: React.FC<RuleFormProps> = ({
     onSave({
       id: initialData?.id || `r-${Date.now()}`,
       missionId,
-      name,
-      description,
-      value,
+      name: name || params.code_name || params.nm_values || 'Untitled Rule',
+      description: description || params.frequency || params.status || '',
+      value: value || params.code_type || params.type || '',
       geometryId: geoSource === 'existing' ? (geometryId || undefined) : undefined,
+      parameters: params
     });
   };
 
@@ -170,30 +208,100 @@ const RuleForm: React.FC<RuleFormProps> = ({
         </header>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+          {/* DYNAMIC DB FIELDS */}
           <div className="space-y-4">
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Rule Identification</label>
-              <input
-                required
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400"
-                placeholder="e.g. Zone A Restriction"
-              />
-            </div>
+            {missionName === 'qa' && (
+              <>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Code Name</label>
+                  <input required type="text" value={params.code_name || ''} onChange={e => updateParam('code_name', e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="e.g. QA_ZONE_1" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Frequency</label>
+                    <input required type="text" value={params.frequency || ''} onChange={e => updateParam('frequency', e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400"
+                      placeholder="e.g. Hourly" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Code Type</label>
+                    <input required type="text" value={params.code_type || ''} onChange={e => updateParam('code_type', e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400"
+                      placeholder="e.g. VISUAL" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Checks Amount</label>
+                    <input required type="number" value={params.checks_amount || ''} onChange={e => updateParam('checks_amount', parseInt(e.target.value))}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Check Percent (%)</label>
+                    <input required type="number" value={params.check_precent || ''} onChange={e => updateParam('check_precent', parseInt(e.target.value))}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400" />
+                  </div>
+                </div>
+              </>
+            )}
 
-            <div>
-              <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Deployment Instructions</label>
-              <textarea
-                required
-                rows={3}
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none placeholder:text-gray-400"
-                placeholder="Provide details on how to apply this rule..."
-              />
-            </div>
+            {missionName === 'new_missions' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">NM Values</label>
+                    <input required type="text" value={params.nm_values || ''} onChange={e => updateParam('nm_values', e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Type</label>
+                    <input required type="text" value={params.type || ''} onChange={e => updateParam('type', e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Status</label>
+                    <input required type="text" value={params.status || ''} onChange={e => updateParam('status', e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">MPT Values</label>
+                    <input required type="text" value={params.mpt_values || ''} onChange={e => updateParam('mpt_values', e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">H Values</label>
+                    <input required type="text" value={params.h_values || ''} onChange={e => updateParam('h_values', e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">NM ID</label>
+                  <input required type="text" value={params.nm_id || ''} onChange={e => updateParam('nm_id', e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                </div>
+              </>
+            )}
+
+            {!['qa', 'new_missions'].includes(missionName) && (
+              <>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Rule Identification</label>
+                  <input required type="text" value={name} onChange={e => setName(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400"
+                    placeholder="e.g. Zone A Restriction" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 dark:text-slate-500 mb-1.5 uppercase tracking-[0.2em]">Deployment Instructions</label>
+                  <textarea required rows={3} value={description} onChange={e => setDescription(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none placeholder:text-gray-400"
+                    placeholder="Provide details..." />
+                </div>
+              </>
+            )}
           </div>
 
           <div className="space-y-4">
