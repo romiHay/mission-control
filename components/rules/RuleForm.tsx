@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Rule, MissionGeometry, GeometryType } from '../types';
-import { PARAM_LABELS, PARAM_OPTIONS } from '../utils/constants';
-import GenericFormField from './GenericFormField';
+import { Rule, MissionGeometry, GeometryType } from '../../types';
+import { PARAM_LABELS, PARAM_OPTIONS } from '../../utils/constants';
+import GenericFormField from '../ui/GenericFormField';
 import SpatialAttachmentSection from './SpatialAttachmentSection';
 
 interface RuleFormProps {
@@ -275,7 +275,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
 
         <footer className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/30 flex gap-3 shrink-0">
           <button onClick={onClose} className="flex-1 px-6 py-3.5 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-500 hover:bg-white transition-all active:scale-95">ביטול</button>
-          <button onClick={() => document.querySelector('form')?.requestSubmit()} className="flex-1 px-6 py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all active:scale-95">שמירה</button>
+          <button onClick={() => document.querySelector('form')?.requestSubmit()} className="flex-1 px-6 py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95">שמירה</button>
         </footer>
       </div>
     </div>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mission, Rule, MissionGeometry } from '../types';
+import { Mission, Rule, MissionGeometry } from '../../types';
 
 interface MissionStatsViewProps {
   mission: Mission;

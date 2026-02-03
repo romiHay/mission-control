@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Mission, Rule, MissionGeometry, ViewMode, GeometryType } from '../types';
-import RuleAccordion from './RuleAccordion';
-import MapDisplay from './MapDisplay';
-import RuleForm from './RuleForm';
+import { Mission, Rule, MissionGeometry, ViewMode, GeometryType } from '../../types';
+import RuleAccordion from '../rules/RuleAccordion';
+import MapDisplay from '../maps/MapDisplay';
+import RuleForm from '../rules/RuleForm';
 import MissionStatsView from './MissionStatsView';
-import MapOverlays from './MapOverlays';
+import MapOverlays from '../maps/MapOverlays';
 
 interface MissionViewProps {
   mission: Mission;
@@ -83,8 +83,22 @@ const MissionView: React.FC<MissionViewProps> = ({
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 p-3 flex gap-2">
-          <button onClick={() => setViewMode('rules')} className={`flex-1 py-2 px-4 rounded-lg font-semibold text-sm transition-all ${viewMode === 'rules' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-50 dark:bg-slate-800 text-gray-500 hover:bg-gray-100'}`}>חוקים</button>
-          <button onClick={() => setViewMode('statistics')} className={`flex-1 py-2 px-4 rounded-lg font-semibold text-sm transition-all ${viewMode === 'statistics' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-50 dark:bg-slate-800 text-gray-500 hover:bg-gray-100'}`}>סטטיסטיקה</button>
+          <button
+            onClick={() => setViewMode('rules')}
+            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${viewMode === 'rules'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none'
+              : 'bg-white dark:bg-slate-800 text-gray-500 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+          >
+            חוקים
+          </button>
+          <button
+            onClick={() => setViewMode('statistics')}
+            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${viewMode === 'statistics'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none'
+              : 'bg-white dark:bg-slate-800 text-gray-500 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+          >
+            סטטיסטיקה
+          </button>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mission } from '../types';
+import { Mission } from '../../types';
 
 interface MissionSidebarProps {
   missions: Mission[];

@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { MissionGeometry, GeometryType } from '../types';
-import GeometryMiniMap from './GeometryMiniMap';
+import { MissionGeometry, GeometryType } from '../../types';
+import GeometryMiniMap from '../maps/GeometryMiniMap';
 
 interface SpatialAttachmentSectionProps {
     geoSource: 'existing' | 'new' | 'none';

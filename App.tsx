@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Mission, Rule, MissionGeometry } from './types';
-import MissionSidebar from './components/MissionSidebar';
-import MissionView from './components/MissionView';
+import MissionSidebar from './components/missions/MissionSidebar';
+import MissionView from './components/missions/MissionView';
 import { api } from './services/api';
 
 const App: React.FC = () => {

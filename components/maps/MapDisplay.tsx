@@ -1,7 +1,7 @@
 // Add useCallback to the react import list
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
-import { MissionGeometry, Rule, GeometryType } from '../types';
+import { MissionGeometry, Rule, GeometryType } from '../../types';
 
 interface MapDisplayProps {
   geometries: MissionGeometry[];

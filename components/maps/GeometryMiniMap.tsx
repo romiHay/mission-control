@@ -2,7 +2,7 @@
 // It allows users to either view an existing spatial asset or draw a new one (Point or Polygon).
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { GeometryType } from '../types';
+import { GeometryType } from '../../types';
 
 interface GeometryMiniMapProps {
     type: GeometryType;
