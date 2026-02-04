@@ -1,7 +1,7 @@
 
 import { Mission, Rule, MissionGeometry } from '../types';
 
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = 'http://localhost:8000/api';
 
 export const api = {
     fetchMissions: async (): Promise<Mission[]> => {
