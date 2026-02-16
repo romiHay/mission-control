@@ -34,6 +34,19 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
     const editMarkersRef = useRef<L.Marker[]>([]);
     const [isReady, setIsReady] = useState(false);
 
+    // Helper functions for distance calculations
+    const L2dist = (p1: [number, number], p2: [number, number]) => {
+        return Math.sqrt(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2));
+    };
+
+    const distToSegment = (p: [number, number], v: [number, number], w: [number, number]) => {
+        const l2 = Math.pow(L2dist(v, w), 2);
+        if (l2 === 0) return L2dist(p, v);
+        let t = ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return L2dist(p, [v[0] + t * (w[0] - v[0]), v[1] + t * (w[1] - v[1])]);
+    };
+
     // STEP 1: Initialization
     // We initialize the Leaflet map once the component mounts.
     useEffect(() => {
@@ -89,6 +102,57 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
                     const coords = coordinates as [number, number][];
                     if (Array.isArray(coords) && coords.length > 0) {
                         const poly = L.polygon(coords, { color: '#4f46e5', weight: 3, fillOpacity: 0.3 }).addTo(group);
+
+                        // If in editing mode, handle adding points by clicking on edges
+                        if (isEditing) {
+                            poly.on('mousedown', (e: L.LeafletMouseEvent) => {
+                                // Prevent map drag while we are creating a point
+                                L.DomEvent.stopPropagation(e);
+                                const pStart: [number, number] = [e.latlng.lat, e.latlng.lng];
+
+                                // Find the closest segment to insert the new point
+                                let minDist = Infinity;
+                                let insertIdx = -1;
+
+                                for (let i = 0; i < coords.length; i++) {
+                                    const p1 = coords[i];
+                                    const p2 = coords[(i + 1) % coords.length];
+                                    const d = distToSegment(pStart, p1, p2);
+                                    if (d < minDist) {
+                                        minDist = d;
+                                        insertIdx = i + 1;
+                                    }
+                                }
+
+                                if (insertIdx !== -1) {
+                                    const dragCoords = [...coords];
+                                    dragCoords.splice(insertIdx, 0, pStart);
+
+                                    // Disable map dragging so only the point moves (moving "alone")
+                                    map.dragging.disable();
+
+                                    // Live update the polygon shape for visual feedback
+                                    poly.setLatLngs(dragCoords);
+
+                                    const onMapMouseMove = (me: L.LeafletMouseEvent) => {
+                                        dragCoords[insertIdx] = [me.latlng.lat, me.latlng.lng];
+                                        poly.setLatLngs(dragCoords);
+                                    };
+
+                                    const onMapMouseUp = () => {
+                                        map.off('mousemove', onMapMouseMove);
+                                        map.off('mouseup', onMapMouseUp);
+                                        map.dragging.enable(); // Re-enable map drag
+                                        // Finalize the geometry change
+                                        onGeometryCaptured([...dragCoords]);
+                                    };
+
+                                    map.on('mousemove', onMapMouseMove);
+                                    map.on('mouseup', onMapMouseUp);
+                                }
+                            });
+                        }
+
                         const bounds = poly.getBounds();
                         if (bounds.isValid() && !isEditing) {
                             map.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
@@ -100,7 +164,7 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
                 console.error("Error drawing geometry on mini-map:", e);
             }
         }
-    }, [coordinates, type, isDrawing, isReady, isEditing]);
+    }, [coordinates, type, isDrawing, isReady, isEditing, onGeometryCaptured]);
 
     // STEP 2.5: Editing Mode logic
     useEffect(() => {
@@ -108,19 +172,23 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
         const group = layerGroupRef.current;
         if (!map || !group || !isReady) return;
 
-        if (!isEditing || type !== 'Polygon' || !coordinates) {
+        const cleanup = () => {
             editMarkersRef.current.forEach(m => m.remove());
             editMarkersRef.current = [];
+        };
+
+        if (!isEditing || type !== 'Polygon' || !coordinates) {
+            cleanup();
             return;
         }
 
         const coords = coordinates as [number, number][];
 
-        // Initialize markers if they don't exist or if coordinates changed from external source (length mismatch)
+        // We rebuild the markers if the number of points changed or if they aren't initialized
         if (editMarkersRef.current.length !== coords.length) {
-            editMarkersRef.current.forEach(m => m.remove());
-            editMarkersRef.current = [];
+            cleanup();
 
+            // Create Vertex Markers
             coords.forEach((coord, index) => {
                 const marker = L.marker(coord, {
                     draggable: true,
@@ -138,7 +206,6 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
                         return [ll.lat, ll.lng] as [number, number];
                     });
 
-                    // Live update the polygon in the group layer
                     group.eachLayer((layer) => {
                         if (layer instanceof L.Polygon) {
                             layer.setLatLngs(newCoords);
@@ -158,7 +225,7 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
             });
 
             const bounds = L.latLngBounds(coords);
-            if (bounds.isValid()) {
+            if (bounds.isValid() && editMarkersRef.current.length === 0) {
                 map.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
             }
         }

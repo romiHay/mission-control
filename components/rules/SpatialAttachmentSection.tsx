@@ -13,7 +13,8 @@ interface SpatialAttachmentSectionProps {
     isDrawingInline: boolean;
     setIsDrawingInline: (val: boolean) => void;
     isEditingInline: boolean;
-    setIsEditingInline: (val: boolean) => void;
+    onToggleEdit: () => void;
+    onCancelEditing: () => void;
     tempGeometryType?: GeometryType;
     tempGeometryCoords?: any;
     isNewGeometryCaptured: boolean;
@@ -35,7 +36,8 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
     isDrawingInline,
     setIsDrawingInline,
     isEditingInline,
-    setIsEditingInline,
+    onToggleEdit,
+    onCancelEditing,
     tempGeometryType,
     tempGeometryCoords,
     isNewGeometryCaptured,
@@ -126,38 +128,45 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                                 isDrawing={isDrawingInline}
                                 isEditing={isEditingInline}
                                 onCancelDrawing={() => {
-                                    setIsDrawingInline(false);
-                                    setIsEditingInline(false);
+                                    onCancelEditing();
                                 }}
                                 darkMode={darkMode}
                             />
 
-                            <div className="flex gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (isEditingInline) {
-                                            setIsEditingInline(false);
-                                        } else {
-                                            setIsEditingInline(false);
-                                            setIsDrawingInline(!isDrawingInline);
-                                        }
-                                    }}
-                                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${isDrawingInline ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-100'}`}
-                                >
-                                    {isDrawingInline ? 'עצור שרטוט' : (isNewGeometryCaptured ? 'שרטט מחדש' : 'התחל שרטוט')}
-                                </button>
-
-                                {isNewGeometryCaptured && tempGeometryType === 'Polygon' && (
+                            <div className="flex flex-col gap-2">
+                                <div className="flex gap-2">
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setIsDrawingInline(false);
-                                            setIsEditingInline(!isEditingInline);
+                                            if (isEditingInline) {
+                                                onCancelEditing();
+                                            } else {
+                                                setIsDrawingInline(!isDrawingInline);
+                                            }
                                         }}
-                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${isEditingInline ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-100'}`}
+                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${isDrawingInline ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-100'}`}
                                     >
-                                        {isEditingInline ? 'סיים עריכה' : 'עריכת נקודות'}
+                                        {isDrawingInline ? 'עצור שרטוט' : (isNewGeometryCaptured ? 'שרטט מחדש' : 'התחל שרטוט')}
+                                    </button>
+
+                                    {isNewGeometryCaptured && tempGeometryType === 'Polygon' && (
+                                        <button
+                                            type="button"
+                                            onClick={onToggleEdit}
+                                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${isEditingInline ? 'bg-indigo-600 text-white shadow-lg' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-100'}`}
+                                        >
+                                            {isEditingInline ? 'סיים עריכה' : 'עריכת נקודות'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {isEditingInline && (
+                                    <button
+                                        type="button"
+                                        onClick={onCancelEditing}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800/30 rounded-xl hover:bg-red-100 transition-all text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        ביטול שינויים
                                     </button>
                                 )}
 
@@ -165,7 +174,7 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                                     <button
                                         type="button"
                                         onClick={() => handleTypeChangeRequest(tempGeometryType === 'Point' ? 'Polygon' : 'Point')}
-                                        className="px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-100 transition-all text-[10px] font-black uppercase tracking-widest"
+                                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-100 transition-all text-[10px] font-black uppercase tracking-widest"
                                     >
                                         החלף ל{tempGeometryType === 'Point' ? 'פוליגון' : 'נקודה'}
                                     </button>
@@ -177,7 +186,6 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                             <button
                                 type="button"
                                 onClick={() => {
-                                    setIsEditingInline(false);
                                     onStartDrawing('Point');
                                     setIsDrawingInline(true);
                                 }}
@@ -194,7 +202,6 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                             <button
                                 type="button"
                                 onClick={() => {
-                                    setIsEditingInline(false);
                                     onStartDrawing('Polygon');
                                     setIsDrawingInline(true);
                                 }}

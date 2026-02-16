@@ -98,6 +98,8 @@ const RuleForm: React.FC<RuleFormProps> = ({
   );
   const [isDrawingInline, setIsDrawingInline] = useState(false);
   const [isEditingInline, setIsEditingInline] = useState(false);
+  const [backupCoords, setBackupCoords] = useState<any>(null);
+  const [wasEditingExisting, setWasEditingExisting] = useState(false);
   const [pendingSource, setPendingSource] = useState<'existing' | 'new' | 'none' | null>(null);
   const [pendingType, setPendingType] = useState<GeometryType | null>(null);
   const [showConfirmSwitch, setShowConfirmSwitch] = useState(false);
@@ -133,6 +135,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
       if (newSource !== 'new') onClearTempGeometry();
       setIsDrawingInline(false);
       setIsEditingInline(false);
+      setWasEditingExisting(false);
     }
   };
 
@@ -147,14 +150,39 @@ const RuleForm: React.FC<RuleFormProps> = ({
       onStartDrawing(newType);
       setIsDrawingInline(true);
       setIsEditingInline(false);
+      setWasEditingExisting(false);
     }
   };
 
   const handleEditExisting = (coords: any) => {
+    setBackupCoords(coords);
+    setWasEditingExisting(true);
     setGeoSource('new');
     onGeometryCaptured('Polygon', coords);
     setIsEditingInline(true);
     setIsDrawingInline(false);
+  };
+
+  const handleToggleEdit = () => {
+    if (!isEditingInline) {
+      setBackupCoords(tempGeometryCoords);
+      setWasEditingExisting(false);
+      setIsEditingInline(true);
+      setIsDrawingInline(false);
+    } else {
+      setIsEditingInline(false);
+    }
+  };
+
+  const handleCancelEditing = () => {
+    if (wasEditingExisting) {
+      setGeoSource('existing');
+      onClearTempGeometry();
+    } else {
+      onGeometryCaptured('Polygon', backupCoords);
+    }
+    setIsEditingInline(false);
+    setWasEditingExisting(false);
   };
 
   const confirmChange = () => {
@@ -164,11 +192,13 @@ const RuleForm: React.FC<RuleFormProps> = ({
       if (pendingSource !== 'new') onClearTempGeometry();
       setIsDrawingInline(false);
       setIsEditingInline(false);
+      setWasEditingExisting(false);
     } else if (pendingType) {
       onClearTempGeometry();
       onStartDrawing(pendingType);
       setIsDrawingInline(true);
       setIsEditingInline(false);
+      setWasEditingExisting(false);
     }
     setShowConfirmSwitch(false);
     setPendingSource(null);
@@ -286,7 +316,8 @@ const RuleForm: React.FC<RuleFormProps> = ({
             isDrawingInline={isDrawingInline}
             setIsDrawingInline={setIsDrawingInline}
             isEditingInline={isEditingInline}
-            setIsEditingInline={setIsEditingInline}
+            onToggleEdit={handleToggleEdit}
+            onCancelEditing={handleCancelEditing}
             tempGeometryType={tempGeometryType}
             tempGeometryCoords={tempGeometryCoords}
             isNewGeometryCaptured={isNewGeometryCaptured}
