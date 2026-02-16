@@ -75,9 +75,9 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                     <select
                         value={geometryId}
                         onChange={e => setGeometryId(e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right"
+                        className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right ${!geometryId ? 'text-gray-500 dark:text-slate-500' : ''}`}
                     >
-                        <option value="">בחר גיאוגרפיה קיימת</option>
+                        <option value="" disabled hidden>בחר גיאוגרפיה קיימת</option>
                         {availableGeometries.map(geo => (
                             <option key={geo.id} value={geo.id} disabled={!!geo.ruleId && geo.ruleId !== initialDataId} className="text-right">
                                 {geo.name} {geo.ruleId && geo.ruleId !== initialDataId ? '(משויך)' : ''}

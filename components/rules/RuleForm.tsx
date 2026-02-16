@@ -27,14 +27,29 @@ const GenericInput: React.FC<{
   placeholder?: string;
   type?: string;
   required?: boolean;
-}> = ({ value, onChange, placeholder, type = "text", required = true }) => (
+  min?: number;
+  max?: number;
+}> = ({ value, onChange, placeholder, type = "text", required = true, min, max }) => (
   <input
     required={required}
     type={type}
     value={value || ''}
-    onChange={e => onChange(type === 'number' ? parseInt(e.target.value) : e.target.value)}
-    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-400 text-right"
+    min={min}
+    max={max}
+    onChange={e => {
+      let val: any = e.target.value;
+      if (type === 'number') {
+        val = val === '' ? '' : parseInt(val);
+        if (typeof val === 'number') {
+          if (min !== undefined && val < min) val = min;
+          if (max !== undefined && val > max) val = max;
+        }
+      }
+      onChange(val);
+    }}
+    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-500 dark:placeholder:text-slate-500 text-right selection:bg-indigo-100 dark:selection:bg-indigo-900/40"
     placeholder={placeholder}
+    spellCheck={false}
   />
 );
 
@@ -49,11 +64,11 @@ const GenericSelect: React.FC<{
     required={required}
     value={value || ''}
     onChange={e => onChange(e.target.value)}
-    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right"
+    className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right ${!value ? 'text-gray-500 dark:text-slate-500' : ''}`}
   >
-    <option value="">{placeholder}</option>
+    <option value="" disabled hidden>{placeholder}</option>
     {options.map(opt => (
-      <option key={opt} value={opt}>{opt}</option>
+      <option key={opt} value={opt} className="text-gray-900 dark:text-white">{opt}</option>
     ))}
   </select>
 );
@@ -89,7 +104,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
   useEffect(() => {
     if (!initialData) {
       if (missionName === 'qa') {
-        setParams({ code_name: '', frequency: '', code_type: '', checks_amount: 1, check_precent: 100 });
+        setParams({ code_name: '', frequency: '', code_type: '', checks_amount: '', check_precent: '' });
       } else if (missionName === 'new_missions') {
         setParams({ nm_values: '', status: '', type: '', mpt_values: '', h_values: '', nm_id: '' });
       }
@@ -219,7 +234,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
                     <GenericInput type="number" value={params.checks_amount} onChange={v => updateParam('checks_amount', v)} />
                   </GenericFormField>
                   <GenericFormField label={PARAM_LABELS.check_precent + " (%)"}>
-                    <GenericInput type="number" value={params.check_precent} onChange={v => updateParam('check_precent', v)} />
+                    <GenericInput type="number" value={params.check_precent} onChange={v => updateParam('check_precent', v)} placeholder="1 - 100" min={0} max={100} />
                   </GenericFormField>
                 </div>
               </>
