@@ -4,11 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run db:migrate && concurrently \"npm run server\" \"vite\"",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "start": "npm run db:migrate && npm run dev",
+    "frontend": "vite",
+    "backend": "py backend/main.py",
+    "db:migrate": "py backend/migrate.py",
     "build": "vite build",
     "preview": "vite preview",
-    "db:migrate": "tsx db_server/migrate.ts",
-    "server": "tsx watch db_server/server.ts",
     "hmr": "powershell (ls App.tsx).LastWriteTime = Get-Date"
   },
   "dependencies": {
