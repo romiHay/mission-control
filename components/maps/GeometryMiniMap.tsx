@@ -9,6 +9,7 @@ interface GeometryMiniMapProps {
     coordinates?: any;
     onGeometryCaptured: (coords: any) => void;
     isDrawing: boolean;
+    isEditing?: boolean;
     onCancelDrawing: () => void;
     darkMode: boolean;
 }
@@ -18,6 +19,7 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
     coordinates,
     onGeometryCaptured,
     isDrawing,
+    isEditing = false,
     onCancelDrawing,
     darkMode
 }) => {
@@ -29,6 +31,7 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
     // Internal state to track the points being drawn before they are confirmed
     const tempPointsRef = useRef<[number, number][]>([]);
     const tempLayerRef = useRef<L.Layer | null>(null);
+    const editMarkersRef = useRef<L.Marker[]>([]);
     const [isReady, setIsReady] = useState(false);
 
     // STEP 1: Initialization
@@ -87,7 +90,7 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
                     if (Array.isArray(coords) && coords.length > 0) {
                         const poly = L.polygon(coords, { color: '#4f46e5', weight: 3, fillOpacity: 0.3 }).addTo(group);
                         const bounds = poly.getBounds();
-                        if (bounds.isValid()) {
+                        if (bounds.isValid() && !isEditing) {
                             map.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
                         }
                     }
@@ -97,7 +100,69 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
                 console.error("Error drawing geometry on mini-map:", e);
             }
         }
-    }, [coordinates, type, isDrawing, isReady]);
+    }, [coordinates, type, isDrawing, isReady, isEditing]);
+
+    // STEP 2.5: Editing Mode logic
+    useEffect(() => {
+        const map = mapInstanceRef.current;
+        const group = layerGroupRef.current;
+        if (!map || !group || !isReady) return;
+
+        if (!isEditing || type !== 'Polygon' || !coordinates) {
+            editMarkersRef.current.forEach(m => m.remove());
+            editMarkersRef.current = [];
+            return;
+        }
+
+        const coords = coordinates as [number, number][];
+
+        // Initialize markers if they don't exist or if coordinates changed from external source (length mismatch)
+        if (editMarkersRef.current.length !== coords.length) {
+            editMarkersRef.current.forEach(m => m.remove());
+            editMarkersRef.current = [];
+
+            coords.forEach((coord, index) => {
+                const marker = L.marker(coord, {
+                    draggable: true,
+                    icon: L.divIcon({
+                        className: 'vertex-marker',
+                        html: `<div style="width: 12px; height: 12px; background: white; border: 3px solid #6366f1; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [12, 12],
+                        iconAnchor: [6, 6]
+                    })
+                }).addTo(map);
+
+                marker.on('drag', () => {
+                    const newCoords = editMarkersRef.current.map(m => {
+                        const ll = m.getLatLng();
+                        return [ll.lat, ll.lng] as [number, number];
+                    });
+
+                    // Live update the polygon in the group layer
+                    group.eachLayer((layer) => {
+                        if (layer instanceof L.Polygon) {
+                            layer.setLatLngs(newCoords);
+                        }
+                    });
+                });
+
+                marker.on('dragend', () => {
+                    const newCoords = editMarkersRef.current.map(m => {
+                        const ll = m.getLatLng();
+                        return [ll.lat, ll.lng] as [number, number];
+                    });
+                    onGeometryCaptured(newCoords);
+                });
+
+                editMarkersRef.current.push(marker);
+            });
+
+            const bounds = L.latLngBounds(coords);
+            if (bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [20, 20], maxZoom: 16 });
+            }
+        }
+    }, [isEditing, type, coordinates, onGeometryCaptured, isReady]);
 
     // STEP 3: Drawing Mode Setup
     // This effect sets up event listeners for drawing when 'isDrawing' is true.

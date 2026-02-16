@@ -12,10 +12,13 @@ interface SpatialAttachmentSectionProps {
     initialDataId?: string;
     isDrawingInline: boolean;
     setIsDrawingInline: (val: boolean) => void;
+    isEditingInline: boolean;
+    setIsEditingInline: (val: boolean) => void;
     tempGeometryType?: GeometryType;
     tempGeometryCoords?: any;
     isNewGeometryCaptured: boolean;
     onStartDrawing: (type: GeometryType) => void;
+    onEditExisting: (coords: any) => void;
     onClearTempGeometry: () => void;
     onGeometryCaptured: (type: GeometryType, coords: any) => void;
     handleTypeChangeRequest: (type: GeometryType) => void;
@@ -31,10 +34,13 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
     initialDataId,
     isDrawingInline,
     setIsDrawingInline,
+    isEditingInline,
+    setIsEditingInline,
     tempGeometryType,
     tempGeometryCoords,
     isNewGeometryCaptured,
     onStartDrawing,
+    onEditExisting,
     onClearTempGeometry,
     onGeometryCaptured,
     handleTypeChangeRequest,
@@ -46,10 +52,10 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
         <div className="space-y-4">
             <div className="flex justify-between items-end">
                 <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-[0.2em]">שיוך מרחבי</label>
-                {geoSource === 'new' && isDrawingInline && (
+                {(isDrawingInline || isEditingInline) && (
                     <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1 animate-pulse">
                         <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
-                        שרטוט חי
+                        {isDrawingInline ? 'שרטוט חי' : 'עריכה פעילה'}
                     </span>
                 )}
             </div>
@@ -93,6 +99,16 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                         onCancelDrawing={() => { }}
                         darkMode={darkMode}
                     />
+
+                    {selectedExistingGeo?.type === 'Polygon' && (
+                        <button
+                            type="button"
+                            onClick={() => onEditExisting(selectedExistingGeo.coordinates)}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 rounded-xl hover:bg-indigo-100 transition-all text-[10px] font-black uppercase tracking-widest"
+                        >
+                            ערוך פוליגון
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -105,28 +121,55 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                                 coordinates={tempGeometryCoords}
                                 onGeometryCaptured={(coords) => {
                                     onGeometryCaptured(tempGeometryType || 'Point', coords);
-                                    setIsDrawingInline(false);
+                                    if (isDrawingInline) setIsDrawingInline(false);
                                 }}
                                 isDrawing={isDrawingInline}
-                                onCancelDrawing={() => setIsDrawingInline(false)}
+                                isEditing={isEditingInline}
+                                onCancelDrawing={() => {
+                                    setIsDrawingInline(false);
+                                    setIsEditingInline(false);
+                                }}
                                 darkMode={darkMode}
                             />
 
                             <div className="flex gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setIsDrawingInline(!isDrawingInline)}
+                                    onClick={() => {
+                                        if (isEditingInline) {
+                                            setIsEditingInline(false);
+                                        } else {
+                                            setIsEditingInline(false);
+                                            setIsDrawingInline(!isDrawingInline);
+                                        }
+                                    }}
                                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${isDrawingInline ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-100'}`}
                                 >
                                     {isDrawingInline ? 'עצור שרטוט' : (isNewGeometryCaptured ? 'שרטט מחדש' : 'התחל שרטוט')}
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleTypeChangeRequest(tempGeometryType === 'Point' ? 'Polygon' : 'Point')}
-                                    className="px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-100 transition-all text-[10px] font-black uppercase tracking-widest"
-                                >
-                                    החלף ל{tempGeometryType === 'Point' ? 'פוליגון' : 'נקודה'}
-                                </button>
+
+                                {isNewGeometryCaptured && tempGeometryType === 'Polygon' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsDrawingInline(false);
+                                            setIsEditingInline(!isEditingInline);
+                                        }}
+                                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest ${isEditingInline ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 hover:bg-indigo-100'}`}
+                                    >
+                                        {isEditingInline ? 'סיים עריכה' : 'עריכת נקודות'}
+                                    </button>
+                                )}
+
+                                {!isDrawingInline && !isEditingInline && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleTypeChangeRequest(tempGeometryType === 'Point' ? 'Polygon' : 'Point')}
+                                        className="px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-100 transition-all text-[10px] font-black uppercase tracking-widest"
+                                    >
+                                        החלף ל{tempGeometryType === 'Point' ? 'פוליגון' : 'נקודה'}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ) : (
@@ -134,6 +177,7 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                             <button
                                 type="button"
                                 onClick={() => {
+                                    setIsEditingInline(false);
                                     onStartDrawing('Point');
                                     setIsDrawingInline(true);
                                 }}
@@ -150,6 +194,7 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                             <button
                                 type="button"
                                 onClick={() => {
+                                    setIsEditingInline(false);
                                     onStartDrawing('Polygon');
                                     setIsDrawingInline(true);
                                 }}

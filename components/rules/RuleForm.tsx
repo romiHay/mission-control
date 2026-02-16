@@ -97,6 +97,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
     initialData?.geometryId ? 'existing' : (isNewGeometryCaptured || !!tempGeometryType) ? 'new' : 'none'
   );
   const [isDrawingInline, setIsDrawingInline] = useState(false);
+  const [isEditingInline, setIsEditingInline] = useState(false);
   const [pendingSource, setPendingSource] = useState<'existing' | 'new' | 'none' | null>(null);
   const [pendingType, setPendingType] = useState<GeometryType | null>(null);
   const [showConfirmSwitch, setShowConfirmSwitch] = useState(false);
@@ -131,6 +132,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
       if (newSource !== 'existing') setGeometryId('');
       if (newSource !== 'new') onClearTempGeometry();
       setIsDrawingInline(false);
+      setIsEditingInline(false);
     }
   };
 
@@ -144,7 +146,15 @@ const RuleForm: React.FC<RuleFormProps> = ({
       onClearTempGeometry();
       onStartDrawing(newType);
       setIsDrawingInline(true);
+      setIsEditingInline(false);
     }
+  };
+
+  const handleEditExisting = (coords: any) => {
+    setGeoSource('new');
+    onGeometryCaptured('Polygon', coords);
+    setIsEditingInline(true);
+    setIsDrawingInline(false);
   };
 
   const confirmChange = () => {
@@ -153,10 +163,12 @@ const RuleForm: React.FC<RuleFormProps> = ({
       if (pendingSource !== 'existing') setGeometryId('');
       if (pendingSource !== 'new') onClearTempGeometry();
       setIsDrawingInline(false);
+      setIsEditingInline(false);
     } else if (pendingType) {
       onClearTempGeometry();
       onStartDrawing(pendingType);
       setIsDrawingInline(true);
+      setIsEditingInline(false);
     }
     setShowConfirmSwitch(false);
     setPendingSource(null);
@@ -273,10 +285,13 @@ const RuleForm: React.FC<RuleFormProps> = ({
             initialDataId={initialData?.id}
             isDrawingInline={isDrawingInline}
             setIsDrawingInline={setIsDrawingInline}
+            isEditingInline={isEditingInline}
+            setIsEditingInline={setIsEditingInline}
             tempGeometryType={tempGeometryType}
             tempGeometryCoords={tempGeometryCoords}
             isNewGeometryCaptured={isNewGeometryCaptured}
             onStartDrawing={onStartDrawing}
+            onEditExisting={handleEditExisting}
             onClearTempGeometry={onClearTempGeometry}
             onGeometryCaptured={onGeometryCaptured}
             handleTypeChangeRequest={handleTypeChangeRequest}
