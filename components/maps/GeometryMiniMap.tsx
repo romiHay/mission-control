@@ -259,19 +259,38 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
             if (tempLayerRef.current) group.removeLayer(tempLayerRef.current);
             if (tempPointsRef.current.length === 0) return;
 
+            const drawGroup = L.featureGroup();
+
             if (type === 'Point') {
-                tempLayerRef.current = L.circleMarker(tempPointsRef.current[0], {
+                L.circleMarker(tempPointsRef.current[0], {
                     radius: 8,
                     color: '#6366f1',
-                    fillOpacity: 1
-                });
+                    fillOpacity: 0.7,
+                    weight: 3
+                }).addTo(drawGroup);
             } else {
-                tempLayerRef.current = L.polygon(tempPointsRef.current, {
-                    color: '#6366f1',
-                    fillOpacity: 0.3
+                // For Polygons: Show the shape if we have at least 2 points
+                if (tempPointsRef.current.length > 1) {
+                    L.polygon(tempPointsRef.current, {
+                        color: '#6366f1',
+                        fillOpacity: 0.3,
+                        weight: 3
+                    }).addTo(drawGroup);
+                }
+
+                // CRITICAL: Always show markers for every click so they don't "disappear"
+                tempPointsRef.current.forEach(pt => {
+                    L.circleMarker(pt, {
+                        radius: 5,
+                        color: '#6366f1',
+                        fillColor: 'white',
+                        fillOpacity: 1,
+                        weight: 2
+                    }).addTo(drawGroup);
                 });
             }
-            tempLayerRef.current.addTo(group);
+
+            tempLayerRef.current = drawGroup.addTo(group);
         };
 
         const handleClick = (e: L.LeafletMouseEvent) => {

@@ -53,7 +53,7 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-end">
-                <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-[0.2em]">שיוך מרחבי</label>
+                <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-[0.2em]">התאמה לגיאוגרפיה</label>
                 {(isDrawingInline || isEditingInline) && (
                     <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1 animate-pulse">
                         <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
@@ -176,7 +176,7 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                                         onClick={() => handleTypeChangeRequest(tempGeometryType === 'Point' ? 'Polygon' : 'Point')}
                                         className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-100 transition-all text-[10px] font-black uppercase tracking-widest"
                                     >
-                                        החלף ל{tempGeometryType === 'Point' ? 'פוליגון' : 'נקודה'}
+                                        החלף לדגימת {tempGeometryType === 'Point' ? 'פוליגון' : 'נקודה'}
                                     </button>
                                 )}
                             </div>
