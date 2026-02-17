@@ -91,12 +91,6 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                       "{rule.description}"
                     </p>
                   </div>
-                  <div>
-                    <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">לוגיקה תפעולית</span>
-                    <div className="bg-gray-100 dark:bg-slate-800 p-2 rounded text-xs font-mono text-gray-700 dark:text-slate-300">
-                      {rule.value}
-                    </div>
-                  </div>
                   {linkedGeo && (
                     <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 font-medium">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

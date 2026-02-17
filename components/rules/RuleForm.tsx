@@ -336,10 +336,6 @@ const RuleForm: React.FC<RuleFormProps> = ({
             handleTypeChangeRequest={handleTypeChangeRequest}
             darkMode={darkMode}
           />
-
-          <GenericFormField label="לוגיקה תפעולית">
-            <GenericInput value={value} onChange={setValue} placeholder="לדוגמה: הגבלת גובה 10 מטר" />
-          </GenericFormField>
         </form>
 
         <footer className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/30 flex gap-3 shrink-0">

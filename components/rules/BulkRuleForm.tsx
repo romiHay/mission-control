@@ -121,7 +121,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     const tempPointsRef = useRef<[number, number][]>([]);
     const tempVisualRef = useRef<L.Layer | null>(null);
 
-    const unassignedGeos = availableGeometries.filter(g => !g.ruleId);
+    const unassignedGeos = React.useMemo(() => availableGeometries.filter(g => !g.ruleId), [availableGeometries]);
 
     // Helper functions for distance calculations
     const L2dist = (p1: [number, number], p2: [number, number]) => {
@@ -178,6 +178,8 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         };
     }, [darkMode]);
 
+    const hasFittedRef = useRef(false);
+
     // Update geometries on map
     useEffect(() => {
         const map = mapInstanceRef.current;
@@ -190,28 +192,31 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
 
         const bounds = L.latLngBounds([]);
 
-        // 1. Render Unassigned (Selectable) Geometries
+        // 1. Render ONLY Unassigned Geometries
         unassignedGeos.forEach(geo => {
             const isSelected = selectedGeoIds.includes(geo.id);
             let layer: L.Layer;
+
+            const color = isSelected ? '#10b981' : '#94a3b8'; // emerald if selected, slate if unselected
+            const opacity = isSelected ? 0.8 : 0.4;
 
             if (geo.type === 'Point') {
                 const coords = geo.coordinates as [number, number];
                 layer = L.circleMarker(coords, {
                     radius: 8,
-                    color: isSelected ? '#10b981' : '#94a3b8',
+                    color: color,
                     weight: isSelected ? 4 : 2,
-                    fillOpacity: isSelected ? 0.8 : 0.4,
-                    fillColor: isSelected ? '#10b981' : '#94a3b8'
+                    fillOpacity: opacity,
+                    fillColor: color
                 });
                 bounds.extend(coords);
             } else {
                 const coords = geo.coordinates as [number, number][];
                 layer = L.polygon(coords, {
-                    color: isSelected ? '#10b981' : '#94a3b8',
+                    color: color,
                     weight: isSelected ? 4 : 2,
-                    fillOpacity: isSelected ? 0.4 : 0.1,
-                    fillColor: isSelected ? '#10b981' : '#94a3b8'
+                    fillOpacity: isSelected ? 0.4 : 0.15,
+                    fillColor: color
                 });
                 bounds.extend(coords);
             }
@@ -336,10 +341,11 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             layer.addTo(group);
         });
 
-        if (bounds.isValid() && selectedGeoIds.length === 0 && newGeos.length === 0) {
-            map.fitBounds(bounds, { padding: [20, 20] });
+        if (bounds.isValid() && !hasFittedRef.current) {
+            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+            hasFittedRef.current = true;
         }
-    }, [unassignedGeos.length, selectedGeoIds, newGeos, isEditing]);
+    }, [availableGeometries, selectedGeoIds, newGeos, isEditing, darkMode]);
 
     // Handle Drawing Interaction
     useEffect(() => {
@@ -347,12 +353,6 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         const group = layerGroupRef.current;
         if (!map || !group || !isDrawing) return;
 
-        // When drawing, temporarily disable interactivity of existing layers so they don't block clicks
-        group.eachLayer((layer: any) => {
-            if (layer instanceof L.Path || layer instanceof L.Marker) {
-                layer.getElement()?.style.setProperty('pointer-events', 'none');
-            }
-        });
         map.invalidateSize();
         map.getContainer().style.cursor = 'crosshair';
         tempPointsRef.current = [];
@@ -410,14 +410,17 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
 
         const handleDblClick = (e: L.LeafletMouseEvent) => {
             L.DomEvent.stop(e.originalEvent);
-            if (isDrawing === 'Polygon' && tempPointsRef.current.length >= 3) {
-                const finalPoints = [...tempPointsRef.current];
-                setNewGeos(prev => [...prev, { type: 'Polygon', coords: finalPoints }]);
-                if (tempVisualRef.current) map.removeLayer(tempVisualRef.current);
-                tempVisualRef.current = null;
-                tempPointsRef.current = [];
-                setIsDrawing(null);
-            }
+            // Slight delay to ensure the last click point is processed
+            setTimeout(() => {
+                if (isDrawing === 'Polygon' && tempPointsRef.current.length >= 3) {
+                    const finalPoints = [...tempPointsRef.current];
+                    setNewGeos(prev => [...prev, { type: 'Polygon', coords: finalPoints }]);
+                    if (tempVisualRef.current) mapInstanceRef.current?.removeLayer(tempVisualRef.current);
+                    tempVisualRef.current = null;
+                    tempPointsRef.current = [];
+                    setIsDrawing(null);
+                }
+            }, 100);
         };
 
         map.on('click', handleClick);
@@ -559,10 +562,6 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                                 </GenericFormField>
                             </div>
                         )}
-
-                        <GenericFormField label="לוגיקה תפעולית">
-                            <GenericInput value={value} onChange={setValue} placeholder="לדוגמה: הגבלת גובה 10 מטר" />
-                        </GenericFormField>
                     </div>
 
                     <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-slate-800">
