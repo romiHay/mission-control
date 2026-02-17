@@ -147,7 +147,7 @@ const MissionView: React.FC<MissionViewProps> = ({
   return (
     <div className="h-full flex flex-col md:flex-row animate-fadeIn relative bg-gray-50 dark:bg-slate-950 font-heebo">
       <div className={`${viewMode === 'rules' ? 'w-full md:w-1/3' : 'w-full'} h-full flex flex-col border-l border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10 overflow-hidden relative transition-all`}>
-        <header className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center text-right">
+        <header className="p-6 h-[92px] border-b border-gray-100 dark:border-slate-800 flex justify-between items-center text-right">
           <div className="flex flex-col">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white leading-tight">{mission.nameHebrew}</h2>
             <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mt-0.5">ניהול חוקים</span>

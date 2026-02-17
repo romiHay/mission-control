@@ -226,6 +226,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       layer.on('click', (e: L.LeafletMouseEvent) => {
         if (drawingMode) return;
         L.DomEvent.stopPropagation(e);
+        (layer as any).openPopup();
         if (onSelectAsset) onSelectAsset(geo.missionId, geo.ruleId, geo.id);
       });
 
@@ -280,19 +281,21 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       return;
     }
 
-    if (targetGeoId === lastTargetGeoIdRef.current) return;
-    lastTargetGeoIdRef.current = targetGeoId;
-
     const targetGeo = geometries.find(g => g.id === targetGeoId);
     if (targetGeo) {
       const layer = geoLayersRef.current[targetGeo.id];
       if (layer) {
         layer.openPopup();
-        if (targetGeo.type === 'Point') {
-          map.flyTo(targetGeo.coordinates as [number, number], 18, { duration: 1 });
-        } else {
-          if (layer instanceof L.Polygon) {
-            map.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
+
+        // ONLY zoom/fly if the target has actually CHANGED
+        if (targetGeoId !== lastTargetGeoIdRef.current) {
+          lastTargetGeoIdRef.current = targetGeoId;
+          if (targetGeo.type === 'Point') {
+            map.flyTo(targetGeo.coordinates as [number, number], 18, { duration: 1 });
+          } else {
+            if (layer instanceof L.Polygon) {
+              map.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
+            }
           }
         }
       }
