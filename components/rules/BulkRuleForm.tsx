@@ -152,7 +152,8 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             zoomControl: true,
             attributionControl: false,
             scrollWheelZoom: true,
-            doubleClickZoom: false
+            doubleClickZoom: false,
+            fadeAnimation: true
         }).setView([32.0853, 34.7818], 13);
 
         const tileUrl = darkMode
@@ -164,9 +165,14 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         layerGroupRef.current = group;
         mapInstanceRef.current = m;
 
+        // Multi-stage invalidation to handle modal entry animation
         m.invalidateSize();
+        const timer = setTimeout(() => {
+            m.invalidateSize();
+        }, 300);
 
         return () => {
+            clearTimeout(timer);
             m.remove();
             mapInstanceRef.current = null;
         };
@@ -374,11 +380,13 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                 }).addTo(visualGroup);
             });
 
-            if (isDrawing === 'Polygon' && tempPointsRef.current.length > 1) {
-                L.polyline(tempPointsRef.current, {
+            if (tempPointsRef.current.length > 1) {
+                L.polygon(tempPointsRef.current, {
                     color: '#6366f1',
                     weight: 3,
-                    dashArray: '5, 10'
+                    fillColor: '#6366f1',
+                    fillOpacity: 0.15,
+                    dashArray: isDrawing === 'Polygon' ? '5, 8' : undefined
                 }).addTo(visualGroup);
             }
 

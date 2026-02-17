@@ -263,13 +263,25 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     hasInitializedViewRef.current = false;
   }, [currentMissionId]);
 
+  // Track last focused ID to prevent "snap-back" on every render/poll
+  const lastTargetGeoIdRef = useRef<string | null>(null);
+
   // Focus Zoom (triggered by manual interactions or selecting a rule from the list)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !isVisible || drawingMode) return;
 
     const targetGeoId = focusedGeoId || (focusedRuleId ? geometries.find(g => g.ruleId === focusedRuleId)?.id : null);
-    if (!targetGeoId) return;
+
+    // Only zoom if the target has actually CHANGED
+    if (!targetGeoId) {
+      lastTargetGeoIdRef.current = null;
+      map.closePopup();
+      return;
+    }
+
+    if (targetGeoId === lastTargetGeoIdRef.current) return;
+    lastTargetGeoIdRef.current = targetGeoId;
 
     const targetGeo = geometries.find(g => g.id === targetGeoId);
     if (targetGeo) {
@@ -284,8 +296,6 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
           }
         }
       }
-    } else {
-      map.closePopup();
     }
   }, [focusedRuleId, focusedGeoId, geometries, isVisible, drawingMode]);
 

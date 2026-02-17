@@ -75,6 +75,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAddBulkRules = async (items: { rule: Rule, newGeo?: MissionGeometry }[]) => {
+    try {
+      // Process all sequentially to ensure order, but only fetch data once at the end
+      for (const item of items) {
+        await api.addRule(item.rule, item.newGeo);
+      }
+      await fetchData();
+    } catch (err) {
+      console.error('Bulk Add Error:', err);
+    }
+  };
+
   return (
     <div dir="rtl" className="flex h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-heebo">
       <MissionSidebar
@@ -95,11 +107,18 @@ const App: React.FC = () => {
             onAddRule={handleAddRule}
             onUpdateRule={handleUpdateRule}
             onDeleteRule={handleDeleteRule}
+            onAddBulkRules={handleAddBulkRules}
             onSelectSpatialAsset={(mId, rId, gId) => { setSelectedMissionId(mId); setActiveRuleId(rId || null); setFocusedGeoId(gId || null); }}
             darkMode={darkMode}
             onSetActiveRule={id => {
-              setActiveRuleId(id);
-              if (id) setFocusedGeoId(rules.find(r => r.id === id)?.geometryId || null);
+              // Toggle: if clicking the active one, close it
+              const nextId = activeRuleId === id ? null : id;
+              setActiveRuleId(nextId);
+              if (nextId) {
+                setFocusedGeoId(rules.find(r => r.id === nextId)?.geometryId || null);
+              } else {
+                setFocusedGeoId(null);
+              }
             }}
           />
         ) : (
