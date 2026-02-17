@@ -4,6 +4,7 @@ import { Mission, Rule, MissionGeometry, ViewMode, GeometryType } from '../../ty
 import RuleAccordion from '../rules/RuleAccordion';
 import MapDisplay from '../maps/MapDisplay';
 import RuleForm from '../rules/RuleForm';
+import BulkRuleForm from '../rules/BulkRuleForm';
 import MissionStatsView from './MissionStatsView';
 import MapOverlays from '../maps/MapOverlays';
 
@@ -28,6 +29,7 @@ const MissionView: React.FC<MissionViewProps> = ({
 }) => {
   const [openRuleId, setOpenRuleId] = useState<string | null>(activeRuleId);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBulkFormOpen, setIsBulkFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | undefined>(undefined);
   const [viewMode, setViewMode] = useState<ViewMode>('rules');
   const [drawingState, setDrawingState] = useState<{ mode: GeometryType | null, isInline: boolean }>({ mode: null, isInline: false });
@@ -64,13 +66,81 @@ const MissionView: React.FC<MissionViewProps> = ({
     setTempGeo(null);
   };
 
+  const handleSaveBulkRules = (baseRuleData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any }[]) => {
+    selectedGeos.forEach(item => {
+      const ruleId = `r-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      let geoToUse: MissionGeometry | undefined;
+
+      if (item.id) {
+        // Using existing geometry
+        const existing = geometries.find(g => g.id === item.id);
+        if (existing) {
+          const rule: Rule = {
+            id: ruleId,
+            missionId: mission.id,
+            name: baseRuleData.name || 'Untitled Rule',
+            description: baseRuleData.description || '',
+            value: baseRuleData.value || '',
+            parameters: baseRuleData.parameters,
+            geometryId: existing.id
+          };
+          onUpdateRule(rule); // This will link the rule to the geometry in the parent state
+        }
+      } else {
+        // Using new geometry
+        const newGeoId = `g-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const newGeo: MissionGeometry = {
+          id: newGeoId,
+          missionId: mission.id,
+          name: `Asset for ${baseRuleData.name}`,
+          type: item.type,
+          coordinates: item.coords,
+          ruleId: ruleId
+        };
+        const rule: Rule = {
+          id: ruleId,
+          missionId: mission.id,
+          name: baseRuleData.name || 'Untitled Rule',
+          description: baseRuleData.description || '',
+          value: baseRuleData.value || '',
+          parameters: baseRuleData.parameters,
+          geometryId: newGeoId
+        };
+        onAddRule(rule, newGeo);
+      }
+    });
+    setIsBulkFormOpen(false);
+  };
+
   return (
     <div className="h-full flex flex-col md:flex-row animate-fadeIn relative bg-gray-50 dark:bg-slate-950 font-heebo">
       <div className={`${viewMode === 'rules' ? 'w-full md:w-1/3' : 'w-full'} h-full flex flex-col border-l border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10 overflow-hidden relative transition-all`}>
         <header className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center text-right">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">{mission.nameHebrew}</h2>
+          <div className="flex flex-col">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white leading-tight">{mission.nameHebrew}</h2>
+            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] mt-0.5">ניהול חוקים</span>
+          </div>
           {viewMode === 'rules' && (
-            <button onClick={() => { setEditingRule(undefined); setTempGeo(null); onSetActiveRule(null); setIsFormOpen(true); }} className="bg-indigo-600 text-white p-2 rounded-full shadow-lg transition-transform active:scale-95"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth={2} strokeLinecap="round" /></svg></button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsBulkFormOpen(true)}
+                className="group relative flex items-center justify-center w-10 h-10 bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
+                title="הוספה מרובה"
+              >
+                <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 20h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2z" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                onClick={() => { setEditingRule(undefined); setTempGeo(null); onSetActiveRule(null); setIsFormOpen(true); }}
+                className="group relative flex items-center justify-center w-10 h-10 bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
+                title="הוספת חוק"
+              >
+                <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 4v16m8-8H4" strokeWidth={2.5} strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
           )}
         </header>
 
@@ -129,6 +199,18 @@ const MissionView: React.FC<MissionViewProps> = ({
           tempGeometryType={drawingState.isInline ? drawingState.mode || tempGeo?.type : tempGeo?.type}
           tempGeometryCoords={tempGeo?.coordinates} onClearTempGeometry={() => setTempGeo(null)}
           onGeometryCaptured={handleGeometryCaptured} darkMode={darkMode}
+        />
+      )}
+
+      {isBulkFormOpen && (
+        <BulkRuleForm
+          missionId={mission.id}
+          missionName={mission.name}
+          missionNameHebrew={mission.nameHebrew}
+          onClose={() => setIsBulkFormOpen(false)}
+          onSaveBulk={handleSaveBulkRules}
+          availableGeometries={missionGeometries}
+          darkMode={darkMode}
         />
       )}
     </div>
