@@ -5,6 +5,7 @@ import RuleAccordion from '../rules/RuleAccordion';
 import MapDisplay from '../maps/MapDisplay';
 import RuleForm from '../rules/RuleForm';
 import BulkRuleForm from '../rules/BulkRuleForm';
+import BulkEditRuleForm from '../rules/BulkEditRuleForm';
 import MissionStatsView from './MissionStatsView';
 import MapOverlays from '../maps/MapOverlays';
 
@@ -18,6 +19,7 @@ interface MissionViewProps {
   onUpdateRule: (rule: Rule, newGeo?: MissionGeometry) => void;
   onDeleteRule: (id: string) => void;
   onAddBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
+  onUpdateBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
   onSelectSpatialAsset: (missionId: string, ruleId?: string, geoId?: string) => void;
   onSetActiveRule: (id: string | null) => void;
   darkMode: boolean;
@@ -25,12 +27,13 @@ interface MissionViewProps {
 
 const MissionView: React.FC<MissionViewProps> = ({
   mission, rules, geometries, activeRuleId, focusedGeoId,
-  onAddRule, onUpdateRule, onDeleteRule, onAddBulkRules,
+  onAddRule, onUpdateRule, onDeleteRule, onAddBulkRules, onUpdateBulkRules,
   onSelectSpatialAsset, onSetActiveRule, darkMode
 }) => {
   const [openRuleId, setOpenRuleId] = useState<string | null>(activeRuleId);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isBulkFormOpen, setIsBulkFormOpen] = useState(false);
+  const [isBulkEditFormOpen, setIsBulkEditFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | undefined>(undefined);
   const [viewMode, setViewMode] = useState<ViewMode>('rules');
   const [drawingState, setDrawingState] = useState<{ mode: GeometryType | null, isInline: boolean }>({ mode: null, isInline: false });
@@ -144,6 +147,30 @@ const MissionView: React.FC<MissionViewProps> = ({
     }
   };
 
+  const handleSaveBulkEditRules = async (ruleIds: string[], updatedParams: Record<string, any>) => {
+    const itemsToUpdate: { rule: Rule }[] = [];
+
+    ruleIds.forEach(id => {
+      const original = rules.find(r => r.id === id);
+      if (original) {
+        itemsToUpdate.push({
+          rule: {
+            ...original,
+            parameters: {
+              ...(original.parameters || {}),
+              ...updatedParams
+            }
+          }
+        });
+      }
+    });
+
+    if (itemsToUpdate.length > 0) {
+      await onUpdateBulkRules(itemsToUpdate);
+    }
+    setIsBulkEditFormOpen(false);
+  };
+
   return (
     <div className="h-full flex flex-col md:flex-row animate-fadeIn relative bg-gray-50 dark:bg-slate-950 font-heebo">
       <div className={`${viewMode === 'rules' ? 'w-full md:w-1/3' : 'w-full'} h-full flex flex-col border-l border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10 overflow-hidden relative transition-all`}>
@@ -161,6 +188,15 @@ const MissionView: React.FC<MissionViewProps> = ({
               >
                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 20h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2z" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setIsBulkEditFormOpen(true)}
+                className="group relative flex items-center justify-center w-10 h-10 bg-amber-50 dark:bg-slate-800 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-600 hover:text-white transition-all duration-300 shadow-sm"
+                title="עריכה מרובה"
+              >
+                <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
               <button
@@ -250,6 +286,17 @@ const MissionView: React.FC<MissionViewProps> = ({
           onClose={() => setIsBulkFormOpen(false)}
           onSaveBulk={handleSaveBulkRules}
           availableGeometries={missionGeometries}
+          darkMode={darkMode}
+        />
+      )}
+
+      {isBulkEditFormOpen && (
+        <BulkEditRuleForm
+          rules={missionRules}
+          geometries={missionGeometries}
+          missionName={mission.name}
+          onClose={() => setIsBulkEditFormOpen(false)}
+          onSave={handleSaveBulkEditRules}
           darkMode={darkMode}
         />
       )}

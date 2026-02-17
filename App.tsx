@@ -87,6 +87,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateBulkRules = async (items: { rule: Rule, newGeo?: MissionGeometry }[]) => {
+    try {
+      for (const item of items) {
+        await api.updateRule(item.rule, item.newGeo);
+      }
+      await fetchData();
+    } catch (err) {
+      console.error('Bulk Update Error:', err);
+    }
+  };
+
   return (
     <div dir="rtl" className="flex h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-heebo">
       <MissionSidebar
@@ -108,6 +119,7 @@ const App: React.FC = () => {
             onUpdateRule={handleUpdateRule}
             onDeleteRule={handleDeleteRule}
             onAddBulkRules={handleAddBulkRules}
+            onUpdateBulkRules={handleUpdateBulkRules}
             onSelectSpatialAsset={(mId, rId, gId) => { setSelectedMissionId(mId); setActiveRuleId(rId || null); setFocusedGeoId(gId || null); }}
             darkMode={darkMode}
             onSetActiveRule={id => {
