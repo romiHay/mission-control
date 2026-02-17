@@ -8,6 +8,7 @@ import SpatialAttachmentSection from './SpatialAttachmentSection';
 interface RuleFormProps {
   missionId: string;
   missionName: string;
+  missionNameHebrew: string;
   initialData?: Rule;
   onClose: () => void;
   onSave: (rule: Rule) => void;
@@ -76,6 +77,7 @@ const GenericSelect: React.FC<{
 const RuleForm: React.FC<RuleFormProps> = ({
   missionId,
   missionName,
+  missionNameHebrew,
   initialData,
   onClose,
   onSave,
@@ -154,14 +156,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
     }
   };
 
-  const handleEditExisting = (coords: any) => {
-    setBackupCoords(coords);
-    setWasEditingExisting(true);
-    setGeoSource('new');
-    onGeometryCaptured('Polygon', coords);
-    setIsEditingInline(true);
-    setIsDrawingInline(false);
-  };
+
 
   const handleToggleEdit = () => {
     if (!isEditingInline) {
@@ -223,20 +218,34 @@ const RuleForm: React.FC<RuleFormProps> = ({
       <div className="bg-white dark:bg-slate-900 shadow-2xl w-full max-w-md h-full overflow-hidden flex flex-col transform transition-all border-l border-gray-200 dark:border-slate-800 pointer-events-auto animate-slideInRight relative font-heebo">
 
         {showConfirmSwitch && (
-          <div className="absolute inset-0 z-[2100] bg-white/95 dark:bg-slate-900/95 backdrop-blur flex items-center justify-center p-8 animate-fadeIn">
-            <div className="max-w-xs text-center space-y-4">
-              <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h4 className="text-lg font-black text-gray-800 dark:text-white uppercase tracking-tight">ביטול שינויים?</h4>
-              <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">
-                {pendingSource ? "שינוי מצב השיוך המרחבי יביא לביטול השרטוט או הבחירה הנוכחיים." : "החלפת סוג הגיאומטריה תביא לביטול השרטוט הנוכחי."}
-              </p>
-              <div className="flex gap-3 pt-4">
-                <button onClick={() => setShowConfirmSwitch(false)} className="flex-1 px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-lg text-xs font-black uppercase tracking-widest text-gray-500 hover:bg-gray-50 transition-colors">הישאר</button>
-                <button onClick={confirmChange} className="flex-1 px-4 py-3 bg-amber-600 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-all active:scale-95">המשך</button>
+          <div className="absolute inset-0 z-[2100] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
+            <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-[280px] border border-gray-100 dark:border-slate-800 animate-slideUp">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 text-amber-500 rounded-2xl flex items-center justify-center shadow-sm rotate-3">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight">ביטול שינויים?</h4>
+                  <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mt-1 px-2">
+                    {pendingSource ? "החלפת מקור הגיאומטריה תבטל את הגיאומטריה שנבחרה." : "שינוי סוג הגיאוגרפיה ימחק את הגיאומטריה ששורטטה."}
+                  </p>
+                </div>
+                <div className="flex gap-2 w-full pt-2">
+                  <button
+                    onClick={() => setShowConfirmSwitch(false)}
+                    className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
+                  >
+                    חזור
+                  </button>
+                  <button
+                    onClick={confirmChange}
+                    className="flex-1 px-4 py-2.5 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-600 shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+                  >
+                    אשר
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -244,7 +253,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
 
         <header className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-indigo-600 text-white shrink-0" dir="rtl">
           <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">הגדרות</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">{missionNameHebrew}</span>
             <h3 className="text-xl font-bold leading-tight">{initialData ? 'עריכת חוק קיים' : 'הוספת חוק חדש'}</h3>
           </div>
           <button onClick={onClose} className="hover:rotate-90 transition-transform p-2">
@@ -322,7 +331,6 @@ const RuleForm: React.FC<RuleFormProps> = ({
             tempGeometryCoords={tempGeometryCoords}
             isNewGeometryCaptured={isNewGeometryCaptured}
             onStartDrawing={onStartDrawing}
-            onEditExisting={handleEditExisting}
             onClearTempGeometry={onClearTempGeometry}
             onGeometryCaptured={onGeometryCaptured}
             handleTypeChangeRequest={handleTypeChangeRequest}

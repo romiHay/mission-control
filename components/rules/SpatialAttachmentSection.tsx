@@ -19,7 +19,6 @@ interface SpatialAttachmentSectionProps {
     tempGeometryCoords?: any;
     isNewGeometryCaptured: boolean;
     onStartDrawing: (type: GeometryType) => void;
-    onEditExisting: (coords: any) => void;
     onClearTempGeometry: () => void;
     onGeometryCaptured: (type: GeometryType, coords: any) => void;
     handleTypeChangeRequest: (type: GeometryType) => void;
@@ -42,7 +41,6 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
     tempGeometryCoords,
     isNewGeometryCaptured,
     onStartDrawing,
-    onEditExisting,
     onClearTempGeometry,
     onGeometryCaptured,
     handleTypeChangeRequest,
@@ -101,16 +99,6 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                         onCancelDrawing={() => { }}
                         darkMode={darkMode}
                     />
-
-                    {selectedExistingGeo?.type === 'Polygon' && (
-                        <button
-                            type="button"
-                            onClick={() => onEditExisting(selectedExistingGeo.coordinates)}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 rounded-xl hover:bg-indigo-100 transition-all text-[10px] font-black uppercase tracking-widest"
-                        >
-                            ערוך פוליגון
-                        </button>
-                    )}
                 </div>
             )}
 
@@ -121,15 +109,13 @@ const SpatialAttachmentSection: React.FC<SpatialAttachmentSectionProps> = ({
                             <GeometryMiniMap
                                 type={tempGeometryType || 'Point'}
                                 coordinates={tempGeometryCoords}
-                                onGeometryCaptured={(coords) => {
+                                onGeometryCaptured={React.useCallback((coords: any) => {
                                     onGeometryCaptured(tempGeometryType || 'Point', coords);
                                     if (isDrawingInline) setIsDrawingInline(false);
-                                }}
+                                }, [onGeometryCaptured, tempGeometryType, isDrawingInline, setIsDrawingInline])}
                                 isDrawing={isDrawingInline}
                                 isEditing={isEditingInline}
-                                onCancelDrawing={() => {
-                                    onCancelEditing();
-                                }}
+                                onCancelDrawing={onCancelEditing}
                                 darkMode={darkMode}
                             />
 

@@ -33,6 +33,7 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
     const tempLayerRef = useRef<L.Layer | null>(null);
     const editMarkersRef = useRef<L.Marker[]>([]);
     const [isReady, setIsReady] = useState(false);
+    const prevIsDrawingRef = useRef(false);
 
     // Helper functions for distance calculations
     const L2dist = (p1: [number, number], p2: [number, number]) => {
@@ -57,7 +58,8 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
             const m = L.map(mapRef.current, {
                 zoomControl: true,
                 attributionControl: false,
-                doubleClickZoom: false
+                doubleClickZoom: false,
+                scrollWheelZoom: true
             }).setView([32.0853, 34.7818], 13);
 
             const tileUrl = darkMode
@@ -235,9 +237,11 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
     // This effect sets up event listeners for drawing when 'isDrawing' is true.
     useEffect(() => {
         const map = mapInstanceRef.current;
-        // STEP 4: Interaction Logic
-        // This effect handles the drawing process by listening to map events.
         const group = layerGroupRef.current;
+
+        const isTransitionToDrawing = isDrawing && !prevIsDrawingRef.current;
+        prevIsDrawingRef.current = isDrawing;
+
         if (!map || !group || !isDrawing || !isReady) {
             if (map) {
                 map.off('click');
@@ -250,9 +254,13 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
         map.invalidateSize();
         // Change cursor to crosshair to indicate active drawing mode
         map.getContainer().style.cursor = 'crosshair';
-        group.clearLayers();
-        tempPointsRef.current = [];
-        tempLayerRef.current = null;
+
+        // ONLY clear if we are starting a NEW drawing session
+        if (isTransitionToDrawing) {
+            group.clearLayers();
+            tempPointsRef.current = [];
+            tempLayerRef.current = null;
+        }
 
         // Redraws the visual elements (marker or polygon) while user is clicking
         const redrawTemp = () => {

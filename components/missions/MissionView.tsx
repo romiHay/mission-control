@@ -119,7 +119,12 @@ const MissionView: React.FC<MissionViewProps> = ({
 
       {isFormOpen && (
         <RuleForm
-          missionId={mission.id} missionName={mission.name} initialData={editingRule} onClose={() => setIsFormOpen(false)} onSave={handleSaveRule}
+          missionId={mission.id}
+          missionName={mission.name}
+          missionNameHebrew={mission.nameHebrew}
+          initialData={editingRule}
+          onClose={() => setIsFormOpen(false)}
+          onSave={handleSaveRule}
           availableGeometries={missionGeometries} onStartDrawing={t => handleStartDrawing(t, true)} isNewGeometryCaptured={!!tempGeo}
           tempGeometryType={drawingState.isInline ? drawingState.mode || tempGeo?.type : tempGeo?.type}
           tempGeometryCoords={tempGeo?.coordinates} onClearTempGeometry={() => setTempGeo(null)}
