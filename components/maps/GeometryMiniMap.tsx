@@ -60,7 +60,27 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
                 attributionControl: false,
                 doubleClickZoom: false,
                 scrollWheelZoom: true
-            }).setView([32.0853, 34.7818], 13);
+            });
+
+            // Calculate initial focus based on provided coordinates
+            if (coordinates) {
+                try {
+                    if (type === 'Point') {
+                        m.setView(coordinates as [number, number], 17);
+                    } else if (type === 'Polygon') {
+                        const bounds = L.latLngBounds(coordinates as [number, number][]);
+                        if (bounds.isValid()) {
+                            m.fitBounds(bounds, { animate: false, padding: [20, 20] });
+                        } else {
+                            m.setView([32.0853, 34.7818], 13);
+                        }
+                    }
+                } catch (err) {
+                    m.setView([32.0853, 34.7818], 13);
+                }
+            } else {
+                m.setView([32.0853, 34.7818], 13);
+            }
 
             const tileUrl = darkMode
                 ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'

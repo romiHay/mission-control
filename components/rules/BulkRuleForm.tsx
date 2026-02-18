@@ -4,6 +4,8 @@ import L from 'leaflet';
 import { Rule, MissionGeometry, GeometryType } from '../../types';
 import { PARAM_LABELS, PARAM_OPTIONS } from '../../utils/constants';
 import GenericFormField from '../ui/GenericFormField';
+import { GenericInput, GenericSelect } from '../ui/GenericInputs';
+import RuleFormModal from './RuleFormModal';
 
 interface BulkRuleFormProps {
     missionId: string;
@@ -14,58 +16,6 @@ interface BulkRuleFormProps {
     availableGeometries: MissionGeometry[];
     darkMode: boolean;
 }
-
-const GenericInput: React.FC<{
-    value: any;
-    onChange: (val: any) => void;
-    placeholder?: string;
-    type?: string;
-    required?: boolean;
-    min?: number;
-    max?: number;
-}> = ({ value, onChange, placeholder, type = "text", required = true, min, max }) => (
-    <input
-        required={required}
-        type={type}
-        value={value || ''}
-        min={min}
-        max={max}
-        onChange={e => {
-            let val: any = e.target.value;
-            if (type === 'number') {
-                val = val === '' ? '' : parseInt(val);
-                if (typeof val === 'number') {
-                    if (min !== undefined && val < min) val = min;
-                    if (max !== undefined && val > max) val = max;
-                }
-            }
-            onChange(val);
-        }}
-        className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-500 dark:placeholder:text-slate-500 text-right selection:bg-indigo-100 dark:selection:bg-indigo-900/40"
-        placeholder={placeholder}
-        spellCheck={false}
-    />
-);
-
-const GenericSelect: React.FC<{
-    value: string;
-    onChange: (val: string) => void;
-    options: string[];
-    placeholder: string;
-    required?: boolean;
-}> = ({ value, onChange, options, placeholder, required = true }) => (
-    <select
-        required={required}
-        value={value || ''}
-        onChange={e => onChange(e.target.value)}
-        className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-right ${!value ? 'text-gray-500 dark:text-slate-500' : ''}`}
-    >
-        <option value="" disabled hidden>{placeholder}</option>
-        {options.map(opt => (
-            <option key={opt} value={opt} className="text-gray-900 dark:text-white">{opt}</option>
-        ))}
-    </select>
-);
 
 const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     missionId,
@@ -154,7 +104,23 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             scrollWheelZoom: true,
             doubleClickZoom: false,
             fadeAnimation: true
-        }).setView([32.0853, 34.7818], 13);
+        });
+
+        // Calculate initial bounds from all available assets to avoid starting at a random location
+        const initialBounds = L.latLngBounds([]);
+        availableGeometries.forEach(geo => {
+            if (geo.type === 'Point') {
+                initialBounds.extend(geo.coordinates as [number, number]);
+            } else {
+                initialBounds.extend(geo.coordinates as [number, number][]);
+            }
+        });
+
+        if (initialBounds.isValid()) {
+            m.fitBounds(initialBounds, { animate: false, padding: [20, 20] });
+        } else {
+            m.setView([32.0853, 34.7818], 13);
+        }
 
         const tileUrl = darkMode
             ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
@@ -463,170 +429,164 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[2000] flex justify-end bg-black/40 backdrop-blur-[2px]">
-            <div className="bg-white dark:bg-slate-900 shadow-2xl w-full max-w-xl h-full overflow-hidden flex flex-col transform transition-all border-l border-gray-200 dark:border-slate-800 pointer-events-auto animate-slideInRight font-heebo relative" dir="rtl">
-                {showDeleteConfirm.active && (
-                    <div className="absolute inset-0 z-[3000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
-                        <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-[280px] border border-gray-100 dark:border-slate-800 animate-slideUp">
-                            <div className="flex flex-col items-center text-center space-y-4">
-                                <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight">למחוק לצמיתות?</h4>
-                                    <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mt-1 px-2">
-                                        {showDeleteConfirm.type === 'geo' ? "האם להסיר את השרטוט שבחרת? לא ניתן לבטל פעולה זו." : "האם למחוק את הנקודה הזו מהצורה?"}
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 w-full pt-2">
-                                    <button
-                                        onClick={() => setShowDeleteConfirm({ active: false, type: 'geo', index: -1 })}
-                                        className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
-                                    >
-                                        ביטול
-                                    </button>
-                                    <button
-                                        onClick={executeDelete}
-                                        className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
-                                    >
-                                        מחק
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <header className="p-6 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-indigo-600 text-white shrink-0">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-200">{missionNameHebrew}</span>
-                        <h3 className="text-xl font-bold leading-tight">הוספת חוקים מרובה</h3>
-                    </div>
-                    <button onClick={onClose} className="hover:rotate-90 transition-transform p-2">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+        <RuleFormModal
+            title="הוספת חוקים מרובה"
+            subtitle={missionNameHebrew}
+            onClose={onClose}
+            darkMode={darkMode}
+            maxWidth="max-w-4xl"
+            footer={
+                <>
+                    <button onClick={onClose} className="flex-1 px-8 py-4 border-2 border-gray-200 dark:border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] text-gray-500 hover:bg-white dark:hover:bg-slate-800 transition-all active:scale-95">
+                        ביטול
                     </button>
-                </header>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-
-                    <div className="space-y-4">
-                        {missionName === 'qa' && (
-                            <>
-                                <GenericFormField label={PARAM_LABELS.code_name}>
-                                    <GenericInput value={params.code_name} onChange={v => updateParam('code_name', v)} placeholder="לדוגמה: QA_ZONE_1" />
-                                </GenericFormField>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <GenericFormField label={PARAM_LABELS.frequency} fullWidth={!(params.frequency === 'חודשי' || params.frequency === 'שבועי')}>
-                                        <GenericSelect value={params.frequency} onChange={v => updateParam('frequency', v)} options={PARAM_OPTIONS.frequency} placeholder="בחר תדירות" />
-                                    </GenericFormField>
-                                    {(params.frequency === 'חודשי' || params.frequency === 'שבועי') && (
-                                        <GenericFormField label={PARAM_LABELS.code_type}>
-                                            <GenericInput value={params.code_type} onChange={v => updateParam('code_type', v)} placeholder="לדוגמה: VISUAL" />
-                                        </GenericFormField>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <GenericFormField label={PARAM_LABELS.checks_amount}>
-                                        <GenericInput type="number" value={params.checks_amount} onChange={v => updateParam('checks_amount', v)} />
-                                    </GenericFormField>
-                                    <GenericFormField label={PARAM_LABELS.check_precent + " (%)"}>
-                                        <GenericInput type="number" value={params.check_precent} onChange={v => updateParam('check_precent', v)} placeholder="1 - 100" min={0} max={100} />
-                                    </GenericFormField>
-                                </div>
-                            </>
-                        )}
-
-                        {missionName === 'new_missions' && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <GenericFormField label={PARAM_LABELS.nm_values} fullWidth>
-                                    <GenericInput value={params.nm_values} onChange={v => updateParam('nm_values', v)} />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.type}>
-                                    <GenericInput value={params.type} onChange={v => updateParam('type', v)} />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.status}>
-                                    <GenericSelect value={params.status} onChange={v => updateParam('status', v)} options={PARAM_OPTIONS.status} placeholder="בחר סטטוס" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.mpt_values}>
-                                    <GenericInput value={params.mpt_values} onChange={v => updateParam('mpt_values', v)} />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.h_values}>
-                                    <GenericInput value={params.h_values} onChange={v => updateParam('h_values', v)} />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.nm_id} fullWidth>
-                                    <GenericInput value={params.nm_id} onChange={v => updateParam('nm_id', v)} />
-                                </GenericFormField>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-slate-800">
-                        <div className="flex justify-between items-end">
-                            <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-[0.2em]">שיוך גיאוגרפי מרובה</label>
-                            <div className="flex gap-2">
-                                <button onClick={() => { setIsEditing(!isEditing); setIsDrawing(null); }} className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isEditing ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 hover:bg-amber-100'}`}>
-                                    {isEditing ? 'סיים עריכה' : 'עריכת נקודות'}
-                                </button>
-                                <button onClick={() => { setIsDrawing('Point'); setIsEditing(false); }} className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDrawing === 'Point' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200'}`}>+ נקודה</button>
-                                <button onClick={() => { setIsDrawing('Polygon'); setIsEditing(false); }} className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDrawing === 'Polygon' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200'}`}>+ פוליגון</button>
-                            </div>
-                        </div>
-
-                        <div className="relative h-72 rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-800 shadow-inner group">
-                            <div ref={mapRef} className="w-full h-full z-0" />
-                            {isEditing && (
-                                <div className="absolute top-4 right-4 z-[100] bg-amber-500/90 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
-                                    מצב עריכה: גרור נקודות
-                                </div>
-                            )}
-                            {isDrawing && (
-                                <div className="absolute inset-0 z-[100] bg-indigo-600/5 pointer-events-none flex items-start justify-center pt-4">
-                                    <div className="bg-indigo-600/90 dark:bg-indigo-500/90 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl pointer-events-auto">
-                                        <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                                        <span>דגום את הגיאומטריה הרצויה</span>
-                                        <div className="w-px h-3 bg-white/20 mx-1"></div>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setIsDrawing(null); if (tempVisualRef.current) mapInstanceRef.current?.removeLayer(tempVisualRef.current); tempPointsRef.current = []; }}
-                                            className="hover:text-indigo-200 transition-colors px-1"
-                                        >
-                                            ביטול
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                            {selectedGeoIds.length > 0 || newGeos.length > 0 ? (
-                                <div className="absolute bottom-4 left-4 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-2 rounded-xl border border-gray-100 dark:border-slate-800 shadow-xl flex items-center gap-3">
-                                    <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-                                        {selectedGeoIds.length + newGeos.length} פריטים נבחרו
-                                    </span>
-                                    <button onClick={() => { setSelectedGeoIds([]); setNewGeos([]); }} className="text-[10px] font-black text-red-500 uppercase tracking-widest hover:underline">נקה הכל</button>
-                                </div>
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gray-50/40 dark:bg-slate-900/40 pointer-events-none">
-                                    <p className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em]">בחר גיאומטריות מהמפה</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <footer className="p-6 border-t border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/30 flex gap-3 shrink-0">
-                    <button onClick={onClose} className="flex-1 px-6 py-3.5 border border-gray-200 dark:border-slate-700 rounded-xl font-bold text-xs uppercase tracking-widest text-gray-500 hover:bg-white transition-all active:scale-95">ביטול</button>
                     <button
                         onClick={handleSave}
                         disabled={selectedGeoIds.length === 0 && newGeos.length === 0}
-                        className="flex-[2] px-6 py-3.5 bg-indigo-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed shadow-lg shadow-indigo-200 dark:shadow-none"
+                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed shadow-xl shadow-indigo-200 dark:shadow-none"
                     >
                         צור {selectedGeoIds.length + newGeos.length} חוקים חדשים
                     </button>
-                </footer>
+                </>
+            }
+        >
+            {showDeleteConfirm.active && (
+                <div className="absolute inset-0 z-[3000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
+                    <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-[280px] border border-gray-100 dark:border-slate-800 animate-slideUp">
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight">למחוק לצמיתות?</h4>
+                                <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mt-1 px-2">
+                                    {showDeleteConfirm.type === 'geo' ? "האם להסיר את השרטוט שבחרת? לא ניתן לבטל פעולה זו." : "האם למחוק את הנקודה הזו מהצורה?"}
+                                </p>
+                            </div>
+                            <div className="flex gap-2 w-full pt-2">
+                                <button
+                                    onClick={() => setShowDeleteConfirm({ active: false, type: 'geo', index: -1 })}
+                                    className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
+                                >
+                                    ביטול
+                                </button>
+                                <button
+                                    onClick={executeDelete}
+                                    className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
+                                >
+                                    מחק
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="space-y-8">
+                <div className="space-y-4">
+                    {missionName === 'qa' && (
+                        <>
+                            <GenericFormField label={PARAM_LABELS.code_name}>
+                                <GenericInput value={params.code_name} onChange={v => updateParam('code_name', v)} placeholder="לדוגמה: QA_ZONE_1" />
+                            </GenericFormField>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <GenericFormField label={PARAM_LABELS.frequency} fullWidth={!(params.frequency === 'חודשי' || params.frequency === 'שבועי')}>
+                                    <GenericSelect value={params.frequency} onChange={v => updateParam('frequency', v)} options={PARAM_OPTIONS.frequency} placeholder="בחר תדירות" />
+                                </GenericFormField>
+                                {(params.frequency === 'חודשי' || params.frequency === 'שבועי') && (
+                                    <GenericFormField label={PARAM_LABELS.code_type}>
+                                        <GenericInput value={params.code_type} onChange={v => updateParam('code_type', v)} placeholder="לדוגמה: VISUAL" />
+                                    </GenericFormField>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <GenericFormField label={PARAM_LABELS.checks_amount}>
+                                    <GenericInput type="number" value={params.checks_amount} onChange={v => updateParam('checks_amount', v)} />
+                                </GenericFormField>
+                                <GenericFormField label={PARAM_LABELS.check_precent + " (%)"}>
+                                    <GenericInput type="number" value={params.check_precent} onChange={v => updateParam('check_precent', v)} placeholder="1 - 100" min={0} max={100} />
+                                </GenericFormField>
+                            </div>
+                        </>
+                    )}
+
+                    {missionName === 'new_missions' && (
+                        <div className="grid grid-cols-2 gap-4">
+                            <GenericFormField label={PARAM_LABELS.nm_values} fullWidth>
+                                <GenericInput value={params.nm_values} onChange={v => updateParam('nm_values', v)} />
+                            </GenericFormField>
+                            <GenericFormField label={PARAM_LABELS.type}>
+                                <GenericInput value={params.type} onChange={v => updateParam('type', v)} />
+                            </GenericFormField>
+                            <GenericFormField label={PARAM_LABELS.status}>
+                                <GenericSelect value={params.status} onChange={v => updateParam('status', v)} options={PARAM_OPTIONS.status} placeholder="בחר סטטוס" />
+                            </GenericFormField>
+                            <GenericFormField label={PARAM_LABELS.mpt_values}>
+                                <GenericInput value={params.mpt_values} onChange={v => updateParam('mpt_values', v)} />
+                            </GenericFormField>
+                            <GenericFormField label={PARAM_LABELS.h_values}>
+                                <GenericInput value={params.h_values} onChange={v => updateParam('h_values', v)} />
+                            </GenericFormField>
+                            <GenericFormField label={PARAM_LABELS.nm_id} fullWidth>
+                                <GenericInput value={params.nm_id} onChange={v => updateParam('nm_id', v)} />
+                            </GenericFormField>
+                        </div>
+                    )}
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-slate-800">
+                    <div className="flex justify-between items-end">
+                        <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-[0.2em]">שיוך גיאוגרפי מרובה</label>
+                        <div className="flex gap-2">
+                            <button onClick={() => { setIsEditing(!isEditing); setIsDrawing(null); }} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isEditing ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 hover:bg-amber-100'}`}>
+                                {isEditing ? 'סיים עריכה' : 'עריכת נקודות'}
+                            </button>
+                            <button onClick={() => { setIsDrawing('Point'); setIsEditing(false); }} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDrawing === 'Point' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200'}`}>+ נקודה</button>
+                            <button onClick={() => { setIsDrawing('Polygon'); setIsEditing(false); }} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDrawing === 'Polygon' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200'}`}>+ פוליגון</button>
+                        </div>
+                    </div>
+
+                    <div className="relative h-80 rounded-[2rem] overflow-hidden border border-gray-200 dark:border-slate-800 shadow-inner group">
+                        <div ref={mapRef} className="w-full h-full z-0" />
+                        {isEditing && (
+                            <div className="absolute top-4 right-4 z-[100] bg-amber-500/90 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
+                                מצב עריכה: גרור נקודות
+                            </div>
+                        )}
+                        {isDrawing && (
+                            <div className="absolute inset-0 z-[100] bg-indigo-600/5 pointer-events-none flex items-start justify-center pt-4">
+                                <div className="bg-indigo-600/90 dark:bg-indigo-500/90 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl pointer-events-auto">
+                                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                                    <span>דגום את הגיאומטריה הרצויה</span>
+                                    <div className="w-px h-3 bg-white/20 mx-1"></div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setIsDrawing(null); if (tempVisualRef.current) mapInstanceRef.current?.removeLayer(tempVisualRef.current); tempPointsRef.current = []; }}
+                                        className="hover:text-indigo-200 transition-colors px-1"
+                                    >
+                                        ביטול
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {selectedGeoIds.length > 0 || newGeos.length > 0 ? (
+                            <div className="absolute bottom-4 left-4 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur px-3 py-2 rounded-xl border border-gray-100 dark:border-slate-800 shadow-xl flex items-center gap-3">
+                                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                    {selectedGeoIds.length + newGeos.length} פריטים נבחרו
+                                </span>
+                                <button onClick={() => { setSelectedGeoIds([]); setNewGeos([]); }} className="text-[10px] font-black text-red-500 uppercase tracking-widest hover:underline">נקה הכל</button>
+                            </div>
+                        ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-50/40 dark:bg-slate-900/40 pointer-events-none">
+                                <p className="text-[10px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-[0.2em]">בחר גיאומטריות מהמפה</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
+        </RuleFormModal>
     );
 };
 
