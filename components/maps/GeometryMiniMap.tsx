@@ -92,7 +92,7 @@ const GeometryMiniMap: React.FC<GeometryMiniMapProps> = ({
             mapInstanceRef.current = m;
             setIsReady(true);
             m.invalidateSize();
-        }, 100);
+        }, 500);
 
         return () => {
             clearTimeout(timeout);

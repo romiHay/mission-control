@@ -106,22 +106,6 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             fadeAnimation: true
         });
 
-        // Calculate initial bounds from all available assets to avoid starting at a random location
-        const initialBounds = L.latLngBounds([]);
-        availableGeometries.forEach(geo => {
-            if (geo.type === 'Point') {
-                initialBounds.extend(geo.coordinates as [number, number]);
-            } else {
-                initialBounds.extend(geo.coordinates as [number, number][]);
-            }
-        });
-
-        if (initialBounds.isValid()) {
-            m.fitBounds(initialBounds, { animate: false, padding: [20, 20] });
-        } else {
-            m.setView([32.0853, 34.7818], 13);
-        }
-
         const tileUrl = darkMode
             ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
             : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
@@ -131,20 +115,47 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         layerGroupRef.current = group;
         mapInstanceRef.current = m;
 
-        // Multi-stage invalidation to handle modal entry animation
         m.invalidateSize();
-        const timer = setTimeout(() => {
-            m.invalidateSize();
-        }, 300);
 
         return () => {
-            clearTimeout(timer);
             m.remove();
             mapInstanceRef.current = null;
         };
     }, [darkMode]);
 
     const hasFittedRef = useRef(false);
+
+    // Initial Zoom Effect: Specific logic to fit bounds once when opened
+    useEffect(() => {
+        const map = mapInstanceRef.current;
+        if (!map || hasFittedRef.current || availableGeometries.length === 0) return;
+
+        // Waiting for modal animation to stabilize
+        const timer = setTimeout(() => {
+            if (!mapInstanceRef.current) return;
+            mapInstanceRef.current.invalidateSize();
+
+            const bounds = L.latLngBounds([]);
+            availableGeometries.forEach(geo => {
+                if (geo.type === 'Point') {
+                    bounds.extend(geo.coordinates as [number, number]);
+                } else {
+                    bounds.extend(geo.coordinates as [number, number][]);
+                }
+            });
+
+            if (bounds.isValid()) {
+                mapInstanceRef.current.fitBounds(bounds, {
+                    padding: [40, 40],
+                    maxZoom: 16,
+                    animate: false
+                });
+                hasFittedRef.current = true;
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [availableGeometries]);
 
     // Update geometries on map
     useEffect(() => {
@@ -307,10 +318,6 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             layer.addTo(group);
         });
 
-        if (bounds.isValid() && !hasFittedRef.current) {
-            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
-            hasFittedRef.current = true;
-        }
     }, [availableGeometries, selectedGeoIds, newGeos, isEditing, darkMode]);
 
     // Handle Drawing Interaction
@@ -443,7 +450,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                     <button
                         onClick={handleSave}
                         disabled={selectedGeoIds.length === 0 && newGeos.length === 0}
-                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed shadow-xl shadow-indigo-200 dark:shadow-none"
+                        className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed shadow-xl shadow-indigo-200 dark:shadow-none"
                     >
                         צור {selectedGeoIds.length + newGeos.length} חוקים חדשים
                     </button>

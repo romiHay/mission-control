@@ -179,7 +179,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
           </button>
           <button
             onClick={() => document.querySelector('form')?.requestSubmit()}
-            className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 shadow-xl shadow-indigo-200 dark:shadow-none"
+            className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 shadow-xl shadow-indigo-200 dark:shadow-none"
           >
             שמירה
           </button>

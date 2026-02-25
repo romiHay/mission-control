@@ -242,7 +242,6 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
     return (
         <RuleFormModal
             title="עריכת חוקים מרובה"
-            subtitle="פעולות קבוצתיות"
             onClose={onClose}
             darkMode={darkMode}
             footer={
@@ -256,7 +255,7 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
                     <button
                         onClick={handleSave}
                         disabled={selectedRuleIds.length === 0}
-                        className="flex-[2] px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed shadow-xl shadow-indigo-200 dark:shadow-none"
+                        className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed shadow-xl shadow-indigo-200 dark:shadow-none"
                     >
                         עדכן {selectedRuleIds.length} חוקים
                     </button>
