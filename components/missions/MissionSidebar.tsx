@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mission } from '../types';
+import { Mission } from '../../types';
 
 interface MissionSidebarProps {
   missions: Mission[];
@@ -43,7 +43,7 @@ const MissionSidebar: React.FC<MissionSidebarProps> = ({ missions, selectedMissi
               }`}
           >
             <div className={`w-2 h-2 rounded-full ${selectedMissionId === mission.id ? 'bg-indigo-600 dark:bg-indigo-400' : 'bg-gray-300 dark:bg-slate-700'}`} />
-            <span className="font-medium">{mission.name}</span>
+            <span className="font-medium">{mission.nameHebrew}</span>
           </button>
         ))}
       </nav>

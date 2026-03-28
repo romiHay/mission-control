@@ -1,7 +1,7 @@
 // Add useCallback to the react import list
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
-import { MissionGeometry, Rule, GeometryType } from '../types';
+import { MissionGeometry, Rule, GeometryType } from '../../types';
 
 interface MapDisplayProps {
   geometries: MissionGeometry[];
@@ -41,6 +41,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const geoLayersRef = useRef<Record<string, L.Layer>>({}); // Stores references to active geometry layers
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const hasInitializedViewRef = useRef(false);
 
   // Drawing Refs: used for tracking mouse movement and click points during creation
   const drawPointsRef = useRef<[number, number][]>([]);
@@ -229,12 +230,12 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       });
 
       const popupContent = `
-        <div style="font-family: sans-serif; min-width: 140px; padding: 2px;">
+        <div style="font-family: sans-serif; min-width: 140px; padding: 2px; text-align: right;" dir="rtl">
           <div style="font-weight: 800; font-size: 14px; margin-bottom: 4px; color: ${darkMode ? '#e2e8f0' : '#1f2937'};">
-            ${associatedRule ? associatedRule.name : 'No Rule Defined'}
+            ${associatedRule ? associatedRule.name : 'לא הוגדר חוק'}
           </div>
-          <div style="font-size: 11px; font-weight: 600; color: ${hasRule ? '#22c55e' : '#ef4444'}; display: flex; align-items: center; gap: 4px;">
-            <span style="font-size: 14px;">${hasRule ? '✓' : '⚠'}</span> ${hasRule ? 'Rule Defined' : 'No Rule Attached'}
+          <div style="font-size: 11px; font-weight: 600; color: ${hasRule ? '#22c55e' : '#ef4444'}; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+            <span style="font-size: 14px;">${hasRule ? '✓' : '⚠'}</span> ${hasRule ? 'חוק הוגדר' : 'חוק חסר'}
           </div>
         </div>
       `;
@@ -250,11 +251,17 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       geoLayersRef.current[geo.id] = layer;
     });
 
-    // Initial load behavior
-    if (geometries.length > 0 && !focusedGeoId && !focusedRuleId && !drawingMode) {
+    // Initial load behavior: Only fit bounds once per mission load
+    if (geometries.length > 0 && !focusedGeoId && !focusedRuleId && !drawingMode && !hasInitializedViewRef.current) {
       fitMissionBounds();
+      hasInitializedViewRef.current = true;
     }
-  }, [geometries, rules, darkMode, currentMissionId, fitMissionBounds]);
+  }, [geometries, rules, darkMode, currentMissionId, fitMissionBounds, focusedGeoId, focusedRuleId, drawingMode]);
+
+  // Reset initialization flag when switching missions
+  useEffect(() => {
+    hasInitializedViewRef.current = false;
+  }, [currentMissionId]);
 
   // Focus Zoom (triggered by manual interactions or selecting a rule from the list)
   useEffect(() => {
@@ -287,25 +294,25 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
       {drawingMode && (
-        <div className="absolute inset-x-0 top-0 flex flex-col items-center pointer-events-none z-[2000] p-4">
+        <div className="absolute inset-x-0 top-0 flex flex-col items-center pointer-events-none z-[2000] p-4" dir="rtl">
           <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur shadow-2xl rounded-2xl border border-indigo-200 dark:border-indigo-900 p-4 flex flex-col items-center gap-3 pointer-events-auto animate-fadeIn">
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse" />
               <span className="font-bold text-gray-800 dark:text-white uppercase tracking-wider text-sm">
-                Drawing {drawingMode}
+                משרטט {drawingMode === 'Point' ? 'נקודה' : 'פוליגון'}
               </span>
             </div>
             <p className="text-xs text-gray-500 dark:text-slate-400 text-center max-w-xs">
               {drawingMode === 'Point'
-                ? 'Click once on the map to set the rule location.'
-                : 'Click multiple times to define the area. Double-click or click "Finish" to complete.'}
+                ? 'לחץ פעם אחת על המפה כדי לקבוע את מיקום הכלל.'
+                : 'לחץ מספר פעמים כדי להגדיר את השטח. דאבל-קליק או לחיצה על "סיום" להשלמה.'}
             </p>
             <div className="flex gap-2 w-full mt-2">
               <button
                 onClick={onCancelDrawing}
                 className="flex-1 px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
               >
-                Cancel
+                ביטול
               </button>
               {drawingMode === 'Polygon' && (
                 <button
@@ -314,7 +321,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
                   }}
                   className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors"
                 >
-                  Finish Area
+                  סיום פוליגון
                 </button>
               )}
             </div>

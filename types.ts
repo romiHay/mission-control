@@ -18,11 +18,14 @@ export interface Rule {
   description: string;
   value: string;
   geometryId?: string;
+  // Dynamic parameters for different mission types
+  parameters?: Record<string, any>;
 }
 
 export interface Mission {
   id: string;
   name: string;
+  nameHebrew: string;
   description: string;
 }
 
