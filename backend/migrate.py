@@ -72,7 +72,7 @@ def migrate():
 
                 CREATE TABLE IF NOT EXISTS web_general.geometries (
                     uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                    geometry_name TEXT UNIQUE NOT NULL,
+                    geometry_name TEXT NOT NULL,
                     geometry geometry NOT NULL
                 );
 
@@ -117,7 +117,7 @@ def migrate():
                 CREATE TABLE IF NOT EXISTS missions.qa (
                     uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                     checks_amount INT NOT NULL,
-                    geometry_uuid UUID NOT NULL,
+                    geometry_uuids UUID[] NOT NULL,
                     frequency TEXT NOT NULL,
                     code_name TEXT NOT NULL,
                     code_type TEXT NOT NULL,
@@ -134,7 +134,7 @@ def migrate():
                     mpt_values TEXT NOT NULL,
                     type TEXT NOT NULL,
                     status TEXT NOT NULL,
-                    geometry_uuid UUID,
+                    geometry_uuids UUID[],
                     from_time TIMESTAMP,
                     created_at TIMESTAMP DEFAULT now(),
                     updated_at TIMESTAMP DEFAULT now()

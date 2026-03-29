@@ -28,7 +28,10 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
     <div className={`divide-y divide-gray-100 dark:divide-slate-800 transition-opacity duration-300 ${disabled ? 'opacity-50 pointer-events-none saturate-50' : ''}`}>
       {rules.map((rule) => {
         const isOpen = openRuleId === rule.id;
-        const linkedGeo = geometries.find(g => g.id === rule.geometryId);
+        const linkedGeos = rule.geometryIds && rule.geometryIds.length > 0
+          ? geometries.filter(g => rule.geometryIds!.includes(g.id))
+          : (rule.geometryId ? geometries.filter(g => g.id === rule.geometryId) : []);
+        const hasGeos = linkedGeos.length > 0;
 
         return (
           <div key={rule.id} className={`transition-all duration-300 ${isOpen ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : 'bg-white dark:bg-slate-900'}`}>
@@ -52,7 +55,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                   <h3 className={`font-semibold transition-colors ${isOpen ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-slate-300'}`}>
                     {rule.name}
                   </h3>
-                  {linkedGeo && (
+                  {hasGeos && (
                     <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded font-bold uppercase">
                       משויך למיקום גיאוגרפי
                     </span>
@@ -91,13 +94,13 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                       "{rule.description}"
                     </p>
                   </div>
-                  {linkedGeo && (
-                    <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 font-medium">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {hasGeos && (
+                    <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 font-medium whitespace-normal">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      ממוקם על {linkedGeo.name}
+                      ממוקם על {linkedGeos.map(g => g.name).join(', ')}
                     </div>
                   )}
                 </div>

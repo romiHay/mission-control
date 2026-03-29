@@ -16,20 +16,22 @@ export const api = {
         const res = await fetch(`${BASE_URL}/rules`);
         return res.json();
     },
-    addRule: async (rule: Rule, newGeo?: MissionGeometry) => {
+    addRule: async (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
+        const geos = Array.isArray(newGeo) ? newGeo : (newGeo ? [newGeo] : (newGeos || []));
         const res = await fetch(`${BASE_URL}/rules`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rule, newGeo }),
+            body: JSON.stringify({ rule, newGeos: geos }),
         });
         if (!res.ok) throw new Error('Failed to save rule');
         return res.json();
     },
-    updateRule: async (rule: Rule, newGeo?: MissionGeometry) => {
+    updateRule: async (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
+        const geos = Array.isArray(newGeo) ? newGeo : (newGeo ? [newGeo] : (newGeos || []));
         const res = await fetch(`${BASE_URL}/rules/${rule.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rule, newGeo }),
+            body: JSON.stringify({ rule, newGeos: geos }),
         });
         if (!res.ok) throw new Error('Failed to update rule');
         return res.json();

@@ -15,8 +15,8 @@ interface MissionViewProps {
   geometries: MissionGeometry[];
   activeRuleId: string | null;
   focusedGeoId: string | null;
-  onAddRule: (rule: Rule, newGeo?: MissionGeometry) => void;
-  onUpdateRule: (rule: Rule, newGeo?: MissionGeometry) => void;
+  onAddRule: (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[]) => void;
+  onUpdateRule: (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[]) => void;
   onDeleteRule: (id: string) => void;
   onAddBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
   onUpdateBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
@@ -64,7 +64,6 @@ const MissionView: React.FC<MissionViewProps> = ({
         id: `g-${Date.now()}`, missionId: mission.id, name: `Asset for ${rule.name}`,
         type: tempGeo.type, coordinates: tempGeo.coordinates, ruleId: rule.id
       };
-      rule.geometryId = newGeo.id;
     }
     editingRule ? onUpdateRule(rule, newGeo) : onAddRule(rule, newGeo);
     setIsFormOpen(false);
@@ -72,72 +71,47 @@ const MissionView: React.FC<MissionViewProps> = ({
   };
 
   const handleSaveBulkRules = async (baseRuleData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any }[]) => {
-    const itemsToSave: { rule: Rule, newGeo?: MissionGeometry }[] = [];
-    const timestamp = Date.now();
+    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    const ruleId = `r-${uniqueSuffix}`;
+    const ruleName = baseRuleData.name || 'כלל מרובה גיאומטריות';
+
+    const existingGeoIds: string[] = [];
+    const newGeos: MissionGeometry[] = [];
 
     selectedGeos.forEach((item, index) => {
-      const uniqueSuffix = `${timestamp}-${index}-${Math.random().toString(36).substr(2, 5)}`;
-      const ruleId = `r-${uniqueSuffix}`;
-
-      const ruleSuffix = baseRuleData.name ? ` (${index + 1})` : ` #${index + 1}`;
-      let finalName = baseRuleData.name || (item.type === 'Point' ? 'נקודת בקרה' : 'שטח בקרה');
-      finalName += ruleSuffix;
-
       if (item.id) {
-        // Using existing geometry
-        const existing = geometries.find(g => g.id === item.id);
-        if (existing) {
-          itemsToSave.push({
-            rule: {
-              id: ruleId,
-              missionId: mission.id,
-              name: finalName,
-              description: baseRuleData.description || '',
-              value: baseRuleData.value || '',
-              parameters: baseRuleData.parameters,
-              geometryId: existing.id
-            }
-          });
-        }
+        existingGeoIds.push(item.id);
       } else {
-        // Using new geometry
-        const newGeoId = `g-${uniqueSuffix}`;
-
+        const newGeoId = `g-${uniqueSuffix}-${index}`;
         let formattedCoords = item.coords;
         if (item.type === 'Point' && Array.isArray(item.coords)) {
           formattedCoords = [parseFloat(item.coords[0]), parseFloat(item.coords[1])];
         } else if (item.type === 'Polygon' && Array.isArray(item.coords)) {
           formattedCoords = item.coords.map((p: any) => [parseFloat(p[0]), parseFloat(p[1])]);
         }
-
-        const newGeo: MissionGeometry = {
+        newGeos.push({
           id: newGeoId,
           missionId: mission.id,
-          name: `מיקום עבור ${finalName}`,
+          name: `מיקום ${index + 1} עבור ${ruleName}`,
           type: item.type,
           coordinates: formattedCoords,
           ruleId: ruleId
-        };
-
-        itemsToSave.push({
-          newGeo,
-          rule: {
-            id: ruleId,
-            missionId: mission.id,
-            name: finalName,
-            description: baseRuleData.description || '',
-            value: baseRuleData.value || '',
-            parameters: baseRuleData.parameters,
-            geometryId: newGeoId
-          }
         });
       }
     });
 
-    if (itemsToSave.length > 0) {
-      await onAddBulkRules(itemsToSave);
-    }
+    const newRule: Rule = {
+      id: ruleId,
+      missionId: mission.id,
+      name: ruleName,
+      description: baseRuleData.description || '',
+      value: baseRuleData.value || '',
+      parameters: baseRuleData.parameters,
+      geometryIds: existingGeoIds
+    };
+
     setIsBulkFormOpen(false);
+    await onAddRule(newRule, newGeos as any);
   };
 
   const handleConfirmDelete = () => {

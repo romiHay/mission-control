@@ -285,31 +285,48 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     const map = mapInstanceRef.current;
     if (!map || !isVisible || drawingMode) return;
 
-    const targetGeoId = focusedGeoId || (focusedRuleId ? geometries.find(g => g.ruleId === focusedRuleId)?.id : null);
-
     // Only zoom if the target has actually CHANGED
-    if (!targetGeoId) {
+    if (!focusedGeoId && !focusedRuleId) {
       lastTargetGeoIdRef.current = null;
       map.closePopup();
       return;
     }
 
-    const targetGeo = geometries.find(g => g.id === targetGeoId);
-    if (targetGeo) {
-      const layer = geoLayersRef.current[targetGeo.id];
-      if (layer) {
-        layer.openPopup();
-
-        // ONLY zoom/fly if the target has actually CHANGED
-        if (targetGeoId !== lastTargetGeoIdRef.current) {
-          lastTargetGeoIdRef.current = targetGeoId;
-          if (targetGeo.type === 'Point') {
-            map.flyTo(targetGeo.coordinates as [number, number], 18, { duration: 1 });
-          } else {
-            if (layer instanceof L.Polygon) {
+    if (focusedGeoId) {
+      const targetGeo = geometries.find(g => g.id === focusedGeoId);
+      if (targetGeo) {
+        const layer = geoLayersRef.current[targetGeo.id];
+        if (layer) {
+          layer.openPopup();
+          if (focusedGeoId !== lastTargetGeoIdRef.current) {
+            lastTargetGeoIdRef.current = focusedGeoId;
+            if (targetGeo.type === 'Point') {
+              map.flyTo(targetGeo.coordinates as [number, number], 18, { duration: 1 });
+            } else if (layer instanceof L.Polygon) {
               map.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
             }
           }
+        }
+      }
+    } else if (focusedRuleId) {
+      const ruleGeos = geometries.filter(g => g.ruleId === focusedRuleId);
+      if (ruleGeos.length > 0 && focusedRuleId !== lastTargetGeoIdRef.current) {
+        lastTargetGeoIdRef.current = focusedRuleId;
+        
+        const bounds = L.latLngBounds([]);
+        ruleGeos.forEach(geo => {
+          const layer = geoLayersRef.current[geo.id];
+          if (layer) layer.openPopup(); // Open pipups for these geometries
+          
+          if (geo.type === 'Point') {
+            bounds.extend(geo.coordinates as [number, number]);
+          } else {
+            bounds.extend(geo.coordinates as [number, number][]);
+          }
+        });
+
+        if (bounds.isValid()) {
+          map.flyToBounds(bounds, { padding: [60, 60], duration: 1 });
         }
       }
     }

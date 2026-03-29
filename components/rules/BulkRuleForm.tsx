@@ -452,7 +452,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                         disabled={selectedGeoIds.length === 0 && newGeos.length === 0}
                         className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed shadow-xl shadow-indigo-200 dark:shadow-none"
                     >
-                        צור {selectedGeoIds.length + newGeos.length} חוקים חדשים
+                        שמור חוק ({selectedGeoIds.length + newGeos.length} צורות)
                     </button>
                 </>
             }

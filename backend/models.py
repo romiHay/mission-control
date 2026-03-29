@@ -12,8 +12,10 @@ class RuleBase(BaseModel):
     description: str
     value: str
     geometryId: Optional[str] = None
+    geometryIds: Optional[List[str]] = []
     parameters: Optional[Dict[str, Any]] = {}
 
 class RuleCreate(BaseModel):
     rule: RuleBase
     newGeo: Optional[GeometryBase] = None
+    newGeos: Optional[List[GeometryBase]] = None

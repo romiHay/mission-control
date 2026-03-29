@@ -18,6 +18,7 @@ export interface Rule {
   description: string;
   value: string;
   geometryId?: string;
+  geometryIds?: string[];
   // Dynamic parameters for different mission types
   parameters?: Record<string, any>;
 }
