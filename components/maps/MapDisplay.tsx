@@ -42,6 +42,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   const geoLayersRef = useRef<Record<string, L.Layer>>({}); // Stores references to active geometry layers
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const hasInitializedViewRef = useRef(false);
+  const [currentZoom, setCurrentZoom] = useState(13);
 
   // Drawing Refs: used for tracking mouse movement and click points during creation
   const drawPointsRef = useRef<[number, number][]>([]);
@@ -94,6 +95,11 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     });
 
     mapInstanceRef.current = m;
+    setCurrentZoom(m.getZoom());
+
+    m.on('zoomend', () => {
+      setCurrentZoom(m.getZoom());
+    });
 
     // Default center point (e.g., Tel Aviv coordinates)
     m.setView([32.0853, 34.7818], 13);
@@ -217,7 +223,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
 
       if (geo.type === 'Point') {
         const coords = geo.coordinates as [number, number];
-        layer = L.circleMarker(coords, { ...layerOptions, radius: isFocused ? 14 : 9 });
+
+        // Dynamic radius based on zoom level: 
+        // Very small when zoomed out (e.g. zoom 10 -> radius 4)
+        // Normal when zoomed in (e.g. zoom 17+ -> radius 9-10)
+        const zoomBase = Math.max(6, Math.min(10, currentZoom - 7));
+        const radius = isFocused ? zoomBase * 1.5 : zoomBase;
+
+        layer = L.circleMarker(coords, { ...layerOptions, radius });
       } else {
         const coords = geo.coordinates as [number, number][];
         layer = L.polygon(coords, { ...layerOptions, dashArray: hasRule ? undefined : '5, 5' });
@@ -226,6 +239,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       layer.on('click', (e: L.LeafletMouseEvent) => {
         if (drawingMode) return;
         L.DomEvent.stopPropagation(e);
+        (layer as any).openPopup();
         if (onSelectAsset) onSelectAsset(geo.missionId, geo.ruleId, geo.id);
       });
 
@@ -263,29 +277,41 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
     hasInitializedViewRef.current = false;
   }, [currentMissionId]);
 
+  // Track last focused ID to prevent "snap-back" on every render/poll
+  const lastTargetGeoIdRef = useRef<string | null>(null);
+
   // Focus Zoom (triggered by manual interactions or selecting a rule from the list)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !isVisible || drawingMode) return;
 
     const targetGeoId = focusedGeoId || (focusedRuleId ? geometries.find(g => g.ruleId === focusedRuleId)?.id : null);
-    if (!targetGeoId) return;
+
+    // Only zoom if the target has actually CHANGED
+    if (!targetGeoId) {
+      lastTargetGeoIdRef.current = null;
+      map.closePopup();
+      return;
+    }
 
     const targetGeo = geometries.find(g => g.id === targetGeoId);
     if (targetGeo) {
       const layer = geoLayersRef.current[targetGeo.id];
       if (layer) {
         layer.openPopup();
-        if (targetGeo.type === 'Point') {
-          map.flyTo(targetGeo.coordinates as [number, number], 18, { duration: 1 });
-        } else {
-          if (layer instanceof L.Polygon) {
-            map.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
+
+        // ONLY zoom/fly if the target has actually CHANGED
+        if (targetGeoId !== lastTargetGeoIdRef.current) {
+          lastTargetGeoIdRef.current = targetGeoId;
+          if (targetGeo.type === 'Point') {
+            map.flyTo(targetGeo.coordinates as [number, number], 18, { duration: 1 });
+          } else {
+            if (layer instanceof L.Polygon) {
+              map.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
+            }
           }
         }
       }
-    } else {
-      map.closePopup();
     }
   }, [focusedRuleId, focusedGeoId, geometries, isVisible, drawingMode]);
 
