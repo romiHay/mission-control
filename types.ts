@@ -9,6 +9,7 @@ export interface MissionGeometry {
   coordinates: number[] | number[][]; // [lat, lng] or [[lat, lng], ...]
   name: string;
   ruleId?: string; // Links back to a rule if applicable
+  createdBy: 'system' | 'user'; // Source of geometry creation
 }
 
 export interface Rule {

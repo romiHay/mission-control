@@ -63,6 +63,7 @@ def get_geometries():
                     SELECT 
                         g.uuid as id,
                         g.geometry_name as name,
+                        g.created_by,
                         ST_AsGeoJSON(g.geometry)::json as geojson,
                         gt.mission_uuid as "missionId",
                         COALESCE(
@@ -93,7 +94,8 @@ def get_geometries():
                         "missionId": row['missionId'],
                         "type": geo['type'],
                         "coordinates": coords,
-                        "ruleId": row['ruleId']
+                        "ruleId": row['ruleId'],
+                        "createdBy": row['created_by']
                     })
                 return formatted
     except Exception as e:
@@ -197,8 +199,8 @@ def create_rule(data: RuleCreate):
                         geo_json = {"type": "Polygon", "coordinates": [poly_ring]}
                     
                     cur.execute("""
-                        INSERT INTO web_general.geometries (geometry_name, geometry)
-                        VALUES (%s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326))
+                        INSERT INTO web_general.geometries (geometry_name, geometry, created_by)
+                        VALUES (%s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), 'user')
                         RETURNING uuid
                     """, (geo.name, json.dumps(geo_json)))
                     gid = cur.fetchone()['uuid']
@@ -220,8 +222,8 @@ def create_rule(data: RuleCreate):
                         params.get('frequency', rule.description),
                         params.get('code_type', rule.value),
                         final_geo_ids,
-                        params.get('checks_amount', 1),
-                        params.get('check_precent', 100)
+                        params.get('checks_amount') if params.get('checks_amount') not in (None, "") else 1,
+                        params.get('check_precent') if params.get('check_precent') not in (None, "") else 100
                     ))
                 elif mission_name == 'new_missions':
                     cur.execute("""
@@ -283,8 +285,8 @@ def update_rule(rule_id: str, data: RuleCreate):
                         geo_json = {"type": "Polygon", "coordinates": [poly_ring]}
                     
                     cur.execute("""
-                        INSERT INTO web_general.geometries (geometry_name, geometry)
-                        VALUES (%s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326))
+                        INSERT INTO web_general.geometries (geometry_name, geometry, created_by)
+                        VALUES (%s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), 'user')
                         RETURNING uuid
                     """, (geo.name, json.dumps(geo_json)))
                     gid = cur.fetchone()['uuid']
@@ -307,8 +309,8 @@ def update_rule(rule_id: str, data: RuleCreate):
                         params.get('frequency', rule.description),
                         params.get('code_type', rule.value),
                         final_geo_ids,
-                        params.get('checks_amount', 1),
-                        params.get('check_precent', 100),
+                        params.get('checks_amount') if params.get('checks_amount') not in (None, "") else 1,
+                        params.get('check_precent') if params.get('check_precent') not in (None, "") else 100,
                         rule_id
                     ))
                 elif mission_name == 'new_missions':

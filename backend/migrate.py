@@ -73,7 +73,8 @@ def migrate():
                 CREATE TABLE IF NOT EXISTS web_general.geometries (
                     uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                     geometry_name TEXT NOT NULL,
-                    geometry geometry NOT NULL
+                    geometry geometry NOT NULL,
+                    created_by TEXT DEFAULT 'system'
                 );
 
                 CREATE TABLE IF NOT EXISTS web_general.users (

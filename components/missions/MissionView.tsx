@@ -60,7 +60,7 @@ const MissionView: React.FC<MissionViewProps> = ({
     if (tempGeo) {
       newGeo = {
         id: `g-${Date.now()}`, missionId: mission.id, name: `Asset for ${rule.name}`,
-        type: tempGeo.type, coordinates: tempGeo.coordinates, ruleId: rule.id
+        type: tempGeo.type, coordinates: tempGeo.coordinates, ruleId: rule.id, createdBy: 'user'
       };
     }
     editingRule ? onUpdateRule(rule, newGeo) : onAddRule(rule, newGeo);
@@ -94,7 +94,8 @@ const MissionView: React.FC<MissionViewProps> = ({
           name: `מיקום ${index + 1} עבור ${ruleName}`,
           type: item.type,
           coordinates: formattedCoords,
-          ruleId: ruleId
+          ruleId: ruleId,
+          createdBy: 'user'
         });
       }
     });
