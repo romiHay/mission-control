@@ -48,21 +48,13 @@ const App: React.FC = () => {
   const selectedMission = missions.find(m => m.id === selectedMissionId) || null;
 
   const handleAddRule = async (newRule: Rule, newGeo?: MissionGeometry | MissionGeometry[]) => {
-    try {
-      await api.addRule(newRule, newGeo);
-      await fetchData();
-    } catch (err) {
-      console.error(err);
-    }
+    await api.addRule(newRule, newGeo);
+    await fetchData();
   };
 
   const handleUpdateRule = async (updatedRule: Rule, newGeo?: MissionGeometry | MissionGeometry[]) => {
-    try {
-      await api.updateRule(updatedRule, newGeo);
-      await fetchData();
-    } catch (err) {
-      console.error(err);
-    }
+    await api.updateRule(updatedRule, newGeo);
+    await fetchData();
   };
 
   const handleDeleteRule = async (ruleId: string) => {

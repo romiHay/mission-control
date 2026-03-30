@@ -124,7 +124,8 @@ def get_rules():
                             'code_type', code_type,
                             'checks_amount', checks_amount,
                             'check_precent', check_precent
-                        ) as parameters
+                        ) as parameters,
+                        (SELECT uuid FROM web_general.missions_data WHERE mission_name_english = 'qa' LIMIT 1) as "missionId"
                     FROM missions.qa
                 """)
                 qa_rules = cur.fetchall()
@@ -144,29 +145,19 @@ def get_rules():
                             'mpt_values', mpt_values,
                             'h_values', h_values,
                             'nm_id', nm_id
-                        ) as parameters
+                        ) as parameters,
+                        (SELECT uuid FROM web_general.missions_data WHERE mission_name_english = 'new_missions' LIMIT 1) as "missionId"
                     FROM missions.new_missions
                 """)
                 nm_rules = cur.fetchall()
 
                 all_rules = qa_rules + nm_rules
                 
-                # Enrich with missionId
-                enriched = []
+                # Make sure geometryIds is a list even if NULL
                 for rule in all_rules:
-                    geo_ids = rule.get('geometryIds') or []
-                    if geo_ids and len(geo_ids) > 0:
-                        cur.execute(
-                            "SELECT mission_uuid FROM web_general.geometry_to_team WHERE geometry_uuid = %s LIMIT 1",
-                            (geo_ids[0],)
-                        )
-                        mission_res = cur.fetchone()
-                        rule['missionId'] = mission_res['mission_uuid'] if mission_res else None
-                    else:
-                        rule['missionId'] = None
-                    enriched.append(rule)
+                    rule['geometryIds'] = rule.get('geometryIds') or []
                 
-                return enriched
+                return all_rules
     except Exception as e:
         print(f"Error fetching rules: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch rules")
@@ -211,7 +202,7 @@ def create_rule(data: RuleCreate):
                         RETURNING uuid
                     """, (geo.name, json.dumps(geo_json)))
                     gid = cur.fetchone()['uuid']
-                    final_geo_ids.append(gid)
+                    final_geo_ids.append(str(gid))
 
                     cur.execute("""
                         INSERT INTO web_general.geometry_to_team (geometry_uuid, mission_uuid, team_uuid)
@@ -297,7 +288,7 @@ def update_rule(rule_id: str, data: RuleCreate):
                         RETURNING uuid
                     """, (geo.name, json.dumps(geo_json)))
                     gid = cur.fetchone()['uuid']
-                    final_geo_ids.append(gid)
+                    final_geo_ids.append(str(gid))
 
                     cur.execute("""
                         INSERT INTO web_general.geometry_to_team (geometry_uuid, mission_uuid, team_uuid)

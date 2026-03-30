@@ -23,7 +23,10 @@ export const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ rule, newGeos: geos }),
         });
-        if (!res.ok) throw new Error('Failed to save rule');
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            throw new Error(err?.detail || 'שגיאה בשמירת החוק מול השרת');
+        }
         return res.json();
     },
     updateRule: async (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
@@ -33,7 +36,10 @@ export const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ rule, newGeos: geos }),
         });
-        if (!res.ok) throw new Error('Failed to update rule');
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            throw new Error(err?.detail || 'שגיאה בעדכון החוק מול השרת');
+        }
         return res.json();
     },
     deleteRule: async (ruleId: string) => {

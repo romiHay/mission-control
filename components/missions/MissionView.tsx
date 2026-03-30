@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Mission, Rule, MissionGeometry, ViewMode, GeometryType } from '../../types';
 import RuleAccordion from '../rules/RuleAccordion';
 import MapDisplay from '../maps/MapDisplay';
-import RuleForm from '../rules/RuleForm';
 import BulkRuleForm from '../rules/BulkRuleForm';
 import BulkEditRuleForm from '../rules/BulkEditRuleForm';
 import MissionStatsView from './MissionStatsView';
@@ -32,7 +31,6 @@ const MissionView: React.FC<MissionViewProps> = ({
 }) => {
   const [openRuleId, setOpenRuleId] = useState<string | null>(activeRuleId);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isBulkFormOpen, setIsBulkFormOpen] = useState(false);
   const [isBulkEditFormOpen, setIsBulkEditFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | undefined>(undefined);
   const [viewMode, setViewMode] = useState<ViewMode>('rules');
@@ -72,7 +70,8 @@ const MissionView: React.FC<MissionViewProps> = ({
 
   const handleSaveBulkRules = async (baseRuleData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any }[]) => {
     const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-    const ruleId = `r-${uniqueSuffix}`;
+    const isUpdating = !!baseRuleData.id;
+    const ruleId = baseRuleData.id || `r-${uniqueSuffix}`;
     const ruleName = baseRuleData.name || 'כלל מרובה גיאומטריות';
 
     const existingGeoIds: string[] = [];
@@ -110,8 +109,8 @@ const MissionView: React.FC<MissionViewProps> = ({
       geometryIds: existingGeoIds
     };
 
-    setIsBulkFormOpen(false);
-    await onAddRule(newRule, newGeos as any);
+    isUpdating ? await onUpdateRule(newRule, newGeos as any) : await onAddRule(newRule, newGeos as any);
+    setIsFormOpen(false);
   };
 
   const handleConfirmDelete = () => {
@@ -155,15 +154,6 @@ const MissionView: React.FC<MissionViewProps> = ({
           </div>
           {viewMode === 'rules' && (
             <div className="flex gap-2">
-              <button
-                onClick={() => setIsBulkFormOpen(true)}
-                className="group relative flex items-center justify-center w-10 h-10 bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
-                title="הוספה מרובה"
-              >
-                <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M17 14v6m-3-3h6M6 10h2a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10 0h2a2 2 0 002-2V6a2 2 0 00-2-2h-2a2 2 0 00-2 2v2a2 2 0 002 2zM6 20h2a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2z" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
               <button
                 onClick={() => setIsBulkEditFormOpen(true)}
                 className="group relative flex items-center justify-center w-10 h-10 bg-amber-50 dark:bg-slate-800 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-600 hover:text-white transition-all duration-300 shadow-sm"
@@ -238,26 +228,12 @@ const MissionView: React.FC<MissionViewProps> = ({
       </div>
 
       {isFormOpen && (
-        <RuleForm
-          missionId={mission.id}
-          missionName={mission.name}
-          missionNameHebrew={mission.nameHebrew}
-          initialData={editingRule}
-          onClose={() => setIsFormOpen(false)}
-          onSave={handleSaveRule}
-          availableGeometries={missionGeometries} onStartDrawing={t => handleStartDrawing(t, true)} isNewGeometryCaptured={!!tempGeo}
-          tempGeometryType={drawingState.isInline ? drawingState.mode || tempGeo?.type : tempGeo?.type}
-          tempGeometryCoords={tempGeo?.coordinates} onClearTempGeometry={() => setTempGeo(null)}
-          onGeometryCaptured={handleGeometryCaptured} darkMode={darkMode}
-        />
-      )}
-
-      {isBulkFormOpen && (
         <BulkRuleForm
           missionId={mission.id}
           missionName={mission.name}
           missionNameHebrew={mission.nameHebrew}
-          onClose={() => setIsBulkFormOpen(false)}
+          initialData={editingRule}
+          onClose={() => { setIsFormOpen(false); setEditingRule(undefined); }}
           onSaveBulk={handleSaveBulkRules}
           availableGeometries={missionGeometries}
           darkMode={darkMode}

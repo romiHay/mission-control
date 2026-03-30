@@ -11,8 +11,9 @@ interface BulkRuleFormProps {
     missionId: string;
     missionName: string;
     missionNameHebrew: string;
+    initialData?: Rule;
     onClose: () => void;
-    onSaveBulk: (baseData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any }[]) => void;
+    onSaveBulk: (baseData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any }[]) => Promise<void>;
     availableGeometries: MissionGeometry[];
     darkMode: boolean;
 }
@@ -24,15 +25,19 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     onClose,
     onSaveBulk,
     availableGeometries,
+    initialData,
     darkMode
 }) => {
-    const [params, setParams] = useState<Record<string, any>>({});
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [value, setValue] = useState('');
+    const [params, setParams] = useState<Record<string, any>>(initialData?.parameters || {});
+    const [name, setName] = useState(initialData?.name || '');
+    const [description, setDescription] = useState(initialData?.description || '');
+    const [value, setValue] = useState(initialData?.value || '');
+
+    const [error, setError] = useState<string[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Selection state
-    const [selectedGeoIds, setSelectedGeoIds] = useState<string[]>([]);
+    const [selectedGeoIds, setSelectedGeoIds] = useState<string[]>(initialData?.geometryIds || []);
     const [newGeos, setNewGeos] = useState<{ type: GeometryType, coords: any }[]>([]);
 
     // Drawing state
@@ -71,7 +76,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     const tempPointsRef = useRef<[number, number][]>([]);
     const tempVisualRef = useRef<L.Layer | null>(null);
 
-    const unassignedGeos = React.useMemo(() => availableGeometries.filter(g => !g.ruleId), [availableGeometries]);
+    const unassignedGeos = React.useMemo(() => availableGeometries.filter(g => !g.ruleId || g.ruleId === initialData?.id), [availableGeometries, initialData]);
 
     // Helper functions for distance calculations
     const L2dist = (p1: [number, number], p2: [number, number]) => {
@@ -87,12 +92,14 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     };
 
     useEffect(() => {
-        if (missionName === 'qa') {
-            setParams({ code_name: '', frequency: '', code_type: '', checks_amount: '', check_precent: '' });
-        } else if (missionName === 'new_missions') {
-            setParams({ nm_values: '', status: '', type: '', mpt_values: '', h_values: '', nm_id: '' });
+        if (!initialData) {
+            if (missionName === 'qa') {
+                setParams({ code_name: '', frequency: '', code_type: '', checks_amount: '', check_precent: '' });
+            } else if (missionName === 'new_missions') {
+                setParams({ nm_values: '', status: '', type: '', mpt_values: '', h_values: '', nm_id: '' });
+            }
         }
-    }, [missionName]);
+    }, [missionName, initialData]);
 
     // Initialize Map
     useEffect(() => {
@@ -200,9 +207,15 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
 
             layer.on('click', (e) => {
                 L.DomEvent.stopPropagation(e);
-                setSelectedGeoIds(prev =>
-                    prev.includes(geo.id) ? prev.filter(id => id !== geo.id) : [...prev, geo.id]
-                );
+                if (isEditing && geo.type === 'Polygon' && selectedGeoIds.includes(geo.id)) {
+                    // Convert an existing assigned shape into a new editable shape, dropping its old DB tie!
+                    setSelectedGeoIds(prev => prev.filter(id => id !== geo.id));
+                    setNewGeos(prev => [...prev, { type: 'Polygon', coords: geo.coordinates }]);
+                } else if (!isEditing) {
+                    setSelectedGeoIds(prev =>
+                        prev.includes(geo.id) ? prev.filter(id => id !== geo.id) : [...prev, geo.id]
+                    );
+                }
             });
 
             layer.addTo(group);
@@ -423,38 +436,79 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         if (key === 'frequency' || key === 'status') setDescription(val);
     };
 
-    const handleSave = () => {
-        const selectedExisting = selectedGeoIds.map(id => {
-            const g = availableGeometries.find(ag => ag.id === id)!;
-            return { id: g.id, type: g.type, coords: g.coordinates };
-        });
+    const handleSave = async () => {
+        // --- FORM VALIDATION ---
+        const errs: string[] = [];
+        if (missionName === 'qa') {
+            if (!params.code_name) errs.push('שדה "שם קוד" הינו שדה חובה');
+            if (!params.frequency) errs.push('שדה "תדירות" הינו שדה חובה');
+            if ((params.frequency === 'חודשי' || params.frequency === 'שבועי') && !params.code_type) {
+                errs.push('שדה "סוג קוד" הינו שדה חובה לתדירות נבחרת זו');
+            }
+            if (params.check_precent === undefined || params.check_precent === '') errs.push('שדה "אחוז בדיקה" הינו שדה חובה');
+        } else if (missionName === 'new_missions') {
+            if (!params.nm_values) errs.push('שדה "ערכי NM" הינו שדה חובה');
+            if (!params.type) errs.push('שדה "סוג" הינו שדה חובה');
+            if (!params.status) errs.push('שדה "סטטוס" הינו שדה חובה');
+            if (!params.mpt_values) errs.push('שדה "ערכי MPT" הינו שדה חובה');
+            if (!params.h_values) errs.push('שדה "ערכי H" הינו שדה חובה');
+            if (!params.nm_id) errs.push('שדה "מזהה NM" הינו שדה חובה');
+        }
 
-        const allGeos = [...selectedExisting, ...newGeos];
-        if (allGeos.length === 0) return alert('בחר לפחות גיאומטריה אחת');
+        if (errs.length > 0) {
+            setError(errs);
+            return;
+        }
 
-        onSaveBulk({ name, description, value, parameters: params }, allGeos);
+        setIsSaving(true);
+        setError([]);
+        try {
+            const selectedExisting = selectedGeoIds.map(id => {
+                const g = availableGeometries.find(ag => ag.id === id)!;
+                return { id: g.id, type: g.type, coords: g.coordinates };
+            });
+
+            const allGeos = [...selectedExisting, ...newGeos];
+            await onSaveBulk({ id: initialData?.id, name, description, value, parameters: params }, allGeos);
+        } catch (err: any) {
+            console.error(err);
+            setError([err.message || 'אירעה שגיאה בשמירת החוק. אנא נסה שנית.']);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
         <RuleFormModal
-            title="הוספת חוקים מרובה"
+            title={initialData ? "עריכת חוק ראשי" : "הוספת חוק חדש"}
             subtitle={missionNameHebrew}
             onClose={onClose}
             darkMode={darkMode}
             maxWidth="max-w-4xl"
             footer={
-                <>
-                    <button onClick={onClose} className="flex-1 px-8 py-4 border-2 border-gray-200 dark:border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] text-gray-500 hover:bg-white dark:hover:bg-slate-800 transition-all active:scale-95">
-                        ביטול
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={selectedGeoIds.length === 0 && newGeos.length === 0}
-                        className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed shadow-xl shadow-indigo-200 dark:shadow-none"
-                    >
-                        שמור חוק ({selectedGeoIds.length + newGeos.length} צורות)
-                    </button>
-                </>
+                <div className="w-full flex flex-col gap-3">
+                    <div className="flex gap-4 w-full">
+                        <button onClick={onClose} disabled={isSaving} className="flex-1 px-8 py-4 border-2 border-gray-200 dark:border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] text-gray-500 hover:bg-white dark:hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50">
+                            ביטול
+                        </button>
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            className="flex-1 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all active:scale-95 shadow-xl shadow-indigo-200 dark:shadow-none disabled:opacity-75 disabled:cursor-not-allowed"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    שומר...
+                                </>
+                            ) : (
+                                selectedGeoIds.length + newGeos.length > 0
+                                    ? `שמור חוק לכל הגיאוגרפיות הבחורות`
+                                    : 'שמור חוק ללא גיאוגרפיה'
+                            )}
+                        </button>
+                    </div>
+                </div>
             }
         >
             {showDeleteConfirm.active && (
@@ -491,19 +545,52 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                 </div>
             )}
 
+            {error.length > 0 && (
+                <div className="absolute inset-0 z-[4000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
+                    <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-sm border border-gray-100 dark:border-slate-800 animate-slideUp">
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="w-14 h-14 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
+                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div className="w-full">
+                                <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight mb-3">שגיאת אימות נתונים</h4>
+                                <div className="bg-red-50/50 dark:bg-slate-800 rounded-xl p-3 w-full flex flex-col gap-2 border border-red-100 dark:border-slate-700 max-h-48 overflow-y-auto">
+                                    {error.map((err, idx) => (
+                                        <div key={idx} className="flex items-start gap-2 text-right w-full">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0"></div>
+                                            <span className="text-xs font-bold text-red-700 dark:text-red-400 leading-relaxed">{err}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="w-full pt-1">
+                                <button
+                                    onClick={() => setError([])}
+                                    className="w-full px-4 py-3.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+                                >
+                                    הבנתי, אחזור לתקן
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="space-y-8">
                 <div className="space-y-4">
                     {missionName === 'qa' && (
                         <>
-                            <GenericFormField label={PARAM_LABELS.code_name}>
+                            <GenericFormField label={PARAM_LABELS.code_name} required={true}>
                                 <GenericInput value={params.code_name} onChange={v => updateParam('code_name', v)} placeholder="לדוגמה: QA_ZONE_1" />
                             </GenericFormField>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <GenericFormField label={PARAM_LABELS.frequency} fullWidth={!(params.frequency === 'חודשי' || params.frequency === 'שבועי')}>
+                                <GenericFormField label={PARAM_LABELS.frequency} required={true} fullWidth={!(params.frequency === 'חודשי' || params.frequency === 'שבועי')}>
                                     <GenericSelect value={params.frequency} onChange={v => updateParam('frequency', v)} options={PARAM_OPTIONS.frequency} placeholder="בחר תדירות" />
                                 </GenericFormField>
                                 {(params.frequency === 'חודשי' || params.frequency === 'שבועי') && (
-                                    <GenericFormField label={PARAM_LABELS.code_type}>
+                                    <GenericFormField label={PARAM_LABELS.code_type} required={true}>
                                         <GenericInput value={params.code_type} onChange={v => updateParam('code_type', v)} placeholder="לדוגמה: VISUAL" />
                                     </GenericFormField>
                                 )}
@@ -512,7 +599,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                                 <GenericFormField label={PARAM_LABELS.checks_amount}>
                                     <GenericInput type="number" value={params.checks_amount} onChange={v => updateParam('checks_amount', v)} />
                                 </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.check_precent + " (%)"}>
+                                <GenericFormField label={PARAM_LABELS.check_precent + " (%)"} required={true}>
                                     <GenericInput type="number" value={params.check_precent} onChange={v => updateParam('check_precent', v)} placeholder="1 - 100" min={0} max={100} />
                                 </GenericFormField>
                             </div>
@@ -521,22 +608,22 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
 
                     {missionName === 'new_missions' && (
                         <div className="grid grid-cols-2 gap-4">
-                            <GenericFormField label={PARAM_LABELS.nm_values} fullWidth>
+                            <GenericFormField label={PARAM_LABELS.nm_values} fullWidth required={true}>
                                 <GenericInput value={params.nm_values} onChange={v => updateParam('nm_values', v)} />
                             </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.type}>
+                            <GenericFormField label={PARAM_LABELS.type} required={true}>
                                 <GenericInput value={params.type} onChange={v => updateParam('type', v)} />
                             </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.status}>
+                            <GenericFormField label={PARAM_LABELS.status} required={true}>
                                 <GenericSelect value={params.status} onChange={v => updateParam('status', v)} options={PARAM_OPTIONS.status} placeholder="בחר סטטוס" />
                             </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.mpt_values}>
+                            <GenericFormField label={PARAM_LABELS.mpt_values} required={true}>
                                 <GenericInput value={params.mpt_values} onChange={v => updateParam('mpt_values', v)} />
                             </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.h_values}>
+                            <GenericFormField label={PARAM_LABELS.h_values} required={true}>
                                 <GenericInput value={params.h_values} onChange={v => updateParam('h_values', v)} />
                             </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.nm_id} fullWidth>
+                            <GenericFormField label={PARAM_LABELS.nm_id} fullWidth required={true}>
                                 <GenericInput value={params.nm_id} onChange={v => updateParam('nm_id', v)} />
                             </GenericFormField>
                         </div>
@@ -558,9 +645,12 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                     <div className="relative h-80 rounded-[2rem] overflow-hidden border border-gray-200 dark:border-slate-800 shadow-inner group">
                         <div ref={mapRef} className="w-full h-full z-0" />
                         {isEditing && (
-                            <div className="absolute top-4 right-4 z-[100] bg-amber-500/90 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
-                                מצב עריכה: גרור נקודות
+                            <div className="absolute top-4 right-4 z-[100] bg-amber-500/90 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex gap-2">
+                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping mt-1"></div>
+                                <div>
+                                    <div className="font-extrabold">מצב עריכה: צורות מודגשות ניתנות לשינוי</div>
+                                    <div className="text-[9px] font-medium opacity-90">גרור נקודות קיימות, או שים נקודות חדשות על הקווים.<br />לחץ על צורות קיימות כדי להוסיף להן נקודות עריכה.</div>
+                                </div>
                             </div>
                         )}
                         {isDrawing && (
