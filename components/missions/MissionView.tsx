@@ -19,6 +19,7 @@ interface MissionViewProps {
   onDeleteRule: (id: string) => void;
   onAddBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
   onUpdateBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
+  onDeleteGeometry: (id: string) => void;
   onSelectSpatialAsset: (missionId: string, ruleId?: string, geoId?: string) => void;
   onSetActiveRule: (id: string | null) => void;
   darkMode: boolean;
@@ -26,7 +27,7 @@ interface MissionViewProps {
 
 const MissionView: React.FC<MissionViewProps> = ({
   mission, rules, geometries, activeRuleId, focusedGeoId,
-  onAddRule, onUpdateRule, onDeleteRule, onAddBulkRules, onUpdateBulkRules,
+  onAddRule, onUpdateRule, onDeleteRule, onAddBulkRules, onUpdateBulkRules, onDeleteGeometry,
   onSelectSpatialAsset, onSetActiveRule, darkMode
 }) => {
   const [openRuleId, setOpenRuleId] = useState<string | null>(activeRuleId);
@@ -38,6 +39,7 @@ const MissionView: React.FC<MissionViewProps> = ({
   const [tempGeo, setTempGeo] = useState<{ type: GeometryType, coordinates: any } | null>(null);
   const [toggles, setToggles] = useState({ reset: 0, zoomIn: 0, zoomOut: 0 });
   const [ruleToDeleteId, setRuleToDeleteId] = useState<string | null>(null);
+  const [geometryToDeleteId, setGeometryToDeleteId] = useState<string | null>(null);
 
   useEffect(() => setOpenRuleId(activeRuleId), [activeRuleId]);
 
@@ -155,7 +157,7 @@ const MissionView: React.FC<MissionViewProps> = ({
           </div>
           {viewMode === 'rules' && (
             <div className="flex gap-2">
-              <button
+              {/* <button
                 onClick={() => setIsBulkEditFormOpen(true)}
                 className="group relative flex items-center justify-center w-10 h-10 bg-amber-50 dark:bg-slate-800 text-amber-600 dark:text-amber-400 rounded-xl hover:bg-amber-600 hover:text-white transition-all duration-300 shadow-sm"
                 title="עריכה מרובה"
@@ -163,7 +165,7 @@ const MissionView: React.FC<MissionViewProps> = ({
                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </button>
+              </button> */}
               <button
                 onClick={() => { setEditingRule(undefined); setTempGeo(null); onSetActiveRule(null); setIsFormOpen(true); }}
                 className="group relative flex items-center justify-center w-10 h-10 bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
@@ -221,6 +223,7 @@ const MissionView: React.FC<MissionViewProps> = ({
               rules={rules} isVisible={viewMode === 'rules'} onSelectAsset={onSelectSpatialAsset} currentMissionId={mission.id}
               darkMode={darkMode} drawingMode={drawingState.isInline ? null : drawingState.mode} onGeometryCaptured={handleGeometryCaptured}
               onCancelDrawing={() => { setDrawingState({ mode: null, isInline: false }); setIsFormOpen(true); }}
+              onDeleteGeometry={setGeometryToDeleteId}
               resetViewToggle={toggles.reset} zoomInToggle={toggles.zoomIn} zoomOutToggle={toggles.zoomOut}
             />
           </div>
@@ -276,6 +279,43 @@ const MissionView: React.FC<MissionViewProps> = ({
                 </button>
                 <button
                   onClick={handleConfirmDelete}
+                  className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
+                >
+                  מחק
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {geometryToDeleteId && (
+        <div className="absolute inset-0 z-[5000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-[280px] border border-gray-100 dark:border-slate-800 animate-slideUp">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight">למחוק גיאומטריה מהמפה?</h4>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mt-1 px-2">
+                  גאומטריה זו תמחק מהמערכת לצמיתות.
+                </p>
+              </div>
+              <div className="flex gap-2 w-full pt-2">
+                <button
+                  onClick={() => setGeometryToDeleteId(null)}
+                  className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={() => {
+                    onDeleteGeometry(geometryToDeleteId);
+                    setGeometryToDeleteId(null);
+                  }}
                   className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
                 >
                   מחק

@@ -12,6 +12,7 @@ interface MapDisplayProps {
   onSelectAsset?: (missionId: string, ruleId?: string, geoId?: string) => void;
   currentMissionId?: string;
   darkMode: boolean;
+  onDeleteGeometry?: (geoId: string) => void;
   drawingMode: GeometryType | null;
   onGeometryCaptured: (type: GeometryType, coords: any) => void;
   onCancelDrawing: () => void;
@@ -32,6 +33,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
   drawingMode,
   onGeometryCaptured,
   onCancelDrawing,
+  onDeleteGeometry,
   resetViewToggle,
   zoomInToggle,
   zoomOutToggle
@@ -243,18 +245,35 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         if (onSelectAsset) onSelectAsset(geo.missionId, geo.ruleId, geo.id);
       });
 
-      const popupContent = `
+      const popupDiv = document.createElement('div');
+      popupDiv.innerHTML = `
         <div style="font-family: sans-serif; min-width: 140px; padding: 2px; text-align: right;" dir="rtl">
           <div style="font-weight: 800; font-size: 14px; margin-bottom: 4px; color: ${darkMode ? '#e2e8f0' : '#1f2937'};">
-            ${associatedRule ? associatedRule.name : 'לא הוגדר חוק'}
+            ${associatedRule ? associatedRule.name : (geo.name || 'ללא שם')}
           </div>
           <div style="font-size: 11px; font-weight: 600; color: ${hasRule ? '#22c55e' : '#ef4444'}; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
             <span style="font-size: 14px;">${hasRule ? '✓' : '⚠'}</span> ${hasRule ? 'חוק הוגדר' : 'חוק חסר'}
           </div>
+          ${(!hasRule && geo.createdBy === 'user') ? `
+          <button id="del-btn-${geo.id}" style="margin-top: 8px; width: 100%; padding: 6px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; transition: opacity 0.2s;" onmousedown="this.style.opacity=0.7" onmouseup="this.style.opacity=1" onmouseleave="this.style.opacity=1">
+             מחק דגימה
+          </button>
+          ` : ''}
         </div>
       `;
 
-      layer.bindPopup(popupContent, {
+      if (!hasRule && geo.createdBy === 'user' && onDeleteGeometry) {
+        const btn = popupDiv.querySelector(`#del-btn-${geo.id}`) as HTMLElement;
+        if (btn) {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onDeleteGeometry(geo.id);
+          });
+        }
+      }
+
+      layer.bindPopup(popupDiv, {
         closeButton: false,
         offset: [0, -5],
         autoPan: false,

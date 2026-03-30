@@ -67,6 +67,16 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDeleteGeometry = async (geoId: string) => {
+    try {
+      await api.deleteGeometry(geoId);
+      await fetchData();
+      if (focusedGeoId === geoId) setFocusedGeoId(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleAddBulkRules = async (items: { rule: Rule, newGeo?: MissionGeometry }[]) => {
     try {
       // Process all sequentially to ensure order, but only fetch data once at the end
@@ -112,6 +122,7 @@ const App: React.FC = () => {
             onDeleteRule={handleDeleteRule}
             onAddBulkRules={handleAddBulkRules}
             onUpdateBulkRules={handleUpdateBulkRules}
+            onDeleteGeometry={handleDeleteGeometry}
             onSelectSpatialAsset={(mId, rId, gId) => { setSelectedMissionId(mId); setActiveRuleId(rId || null); setFocusedGeoId(gId || null); }}
             darkMode={darkMode}
             onSetActiveRule={id => {

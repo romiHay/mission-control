@@ -48,5 +48,12 @@ export const api = {
         });
         if (!res.ok) throw new Error('Failed to delete rule');
         return res.json();
+    },
+    deleteGeometry: async (geoId: string) => {
+        const res = await fetch(`${BASE_URL}/geometries/${geoId}`, {
+            method: 'DELETE',
+        });
+        if (!res.ok) throw new Error('Failed to delete geometry');
+        return res.json();
     }
 };

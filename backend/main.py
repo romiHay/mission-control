@@ -361,6 +361,28 @@ def delete_rule(rule_id: str):
         print(f"Error deleting rule: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete rule")
 
+@app.delete("/api/geometries/{geo_id}")
+def delete_geometry(geo_id: str):
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                # Cleanup geometry_to_team mapping first
+                cur.execute("DELETE FROM web_general.geometry_to_team WHERE geometry_uuid = %s", (geo_id,))
+                
+                # Basic protection: only delete if created_by='user'
+                cur.execute("DELETE FROM web_general.geometries WHERE uuid = %s AND created_by = 'user'", (geo_id,))
+                if cur.rowcount == 0:
+                    conn.rollback() # Rollback the previous delete if geometry wasn't deleted
+                    raise HTTPException(status_code=404, detail="Geometry not found or cannot be deleted")
+                
+                conn.commit()
+                return {"message": "Geometry deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting geometry: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete geometry")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
