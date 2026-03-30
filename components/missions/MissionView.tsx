@@ -68,7 +68,7 @@ const MissionView: React.FC<MissionViewProps> = ({
     setTempGeo(null);
   };
 
-  const handleSaveBulkRules = async (baseRuleData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any }[]) => {
+  const handleSaveBulkRules = async (baseRuleData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any, name?: string }[]) => {
     const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
     const isUpdating = !!baseRuleData.id;
     const ruleId = baseRuleData.id || `r-${uniqueSuffix}`;
@@ -91,7 +91,7 @@ const MissionView: React.FC<MissionViewProps> = ({
         newGeos.push({
           id: newGeoId,
           missionId: mission.id,
-          name: `מיקום ${index + 1} עבור ${ruleName}`,
+          name: item.name || `מיקום ${index + 1} עבור ${ruleName}`,
           type: item.type,
           coordinates: formattedCoords,
           ruleId: ruleId,

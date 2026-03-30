@@ -13,7 +13,7 @@ interface BulkRuleFormProps {
     missionNameHebrew: string;
     initialData?: Rule;
     onClose: () => void;
-    onSaveBulk: (baseData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any }[]) => Promise<void>;
+    onSaveBulk: (baseData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any, name?: string }[]) => Promise<void>;
     availableGeometries: MissionGeometry[];
     darkMode: boolean;
 }
@@ -38,10 +38,12 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
 
     // Selection state
     const [selectedGeoIds, setSelectedGeoIds] = useState<string[]>(initialData?.geometryIds || []);
-    const [newGeos, setNewGeos] = useState<{ type: GeometryType, coords: any }[]>([]);
+    const [newGeos, setNewGeos] = useState<{ type: GeometryType, coords: any, name?: string }[]>([]);
 
     // Drawing state
     const [isDrawing, setIsDrawing] = useState<GeometryType | null>(null);
+    const [pendingGeo, setPendingGeo] = useState<{ type: GeometryType, coords: any } | null>(null);
+    const [pendingGeoName, setPendingGeoName] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ active: boolean, type: 'geo' | 'point', index: number, pointIndex?: number }>({ active: false, type: 'geo', index: -1 });
 
@@ -210,7 +212,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                 if (isEditing && geo.type === 'Polygon' && selectedGeoIds.includes(geo.id)) {
                     // Convert an existing assigned shape into a new editable shape, dropping its old DB tie!
                     setSelectedGeoIds(prev => prev.filter(id => id !== geo.id));
-                    setNewGeos(prev => [...prev, { type: 'Polygon', coords: geo.coordinates }]);
+                    setNewGeos(prev => [...prev, { type: 'Polygon', coords: geo.coordinates, name: geo.name }]);
                 } else if (!isEditing) {
                     setSelectedGeoIds(prev =>
                         prev.includes(geo.id) ? prev.filter(id => id !== geo.id) : [...prev, geo.id]
@@ -383,7 +385,8 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             const latlng: [number, number] = [e.latlng.lat, e.latlng.lng];
 
             if (isDrawing === 'Point') {
-                setNewGeos(prev => [...prev, { type: 'Point', coords: latlng }]);
+                setPendingGeo({ type: 'Point', coords: latlng });
+                setPendingGeoName('');
                 setIsDrawing(null);
             } else {
                 const last = tempPointsRef.current[tempPointsRef.current.length - 1];
@@ -400,7 +403,8 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             setTimeout(() => {
                 if (isDrawing === 'Polygon' && tempPointsRef.current.length >= 3) {
                     const finalPoints = [...tempPointsRef.current];
-                    setNewGeos(prev => [...prev, { type: 'Polygon', coords: finalPoints }]);
+                    setPendingGeo({ type: 'Polygon', coords: finalPoints });
+                    setPendingGeoName('');
                     if (tempVisualRef.current) mapInstanceRef.current?.removeLayer(tempVisualRef.current);
                     tempVisualRef.current = null;
                     tempPointsRef.current = [];
@@ -571,6 +575,55 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                                     className="w-full px-4 py-3.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-slate-700 transition-all active:scale-95"
                                 >
                                     הבנתי, אחזור לתקן
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {pendingGeo && (
+                <div className="absolute inset-0 z-[5000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
+                    <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-sm border border-gray-100 dark:border-slate-800 animate-slideUp">
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 rounded-2xl flex items-center justify-center shadow-sm">
+                                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </div>
+                            <div className="w-full">
+                                <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight mb-3">שם לגיאומטריה קבועה</h4>
+                                <div className="w-full text-right mt-2">
+                                    <label className="text-xs font-bold text-gray-500 mb-2 block">הכנס שם עבור המיקום החדש:</label>
+                                    <input 
+                                        type="text"
+                                        autoFocus
+                                        value={pendingGeoName}
+                                        onChange={e => setPendingGeoName(e.target.value)}
+                                        placeholder="לדוגמה: מחסן מרכזי"
+                                        className="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-transparent text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-2 w-full pt-2">
+                                <button
+                                    onClick={() => {
+                                        setPendingGeo(null);
+                                        setPendingGeoName('');
+                                    }}
+                                    className="flex-1 px-4 py-3 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95"
+                                >
+                                    ביטול שרטוט
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setNewGeos(prev => [...prev, { type: pendingGeo.type, coords: pendingGeo.coords, name: pendingGeoName || 'ללא שם' }]);
+                                        setPendingGeo(null);
+                                        setPendingGeoName('');
+                                    }}
+                                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-md shadow-indigo-200 dark:shadow-none"
+                                >
+                                    שמור
                                 </button>
                             </div>
                         </div>
