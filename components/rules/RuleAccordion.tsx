@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { Rule, MissionGeometry } from '../../types';
+import { PARAM_LABELS } from '../../utils/constants';
 
 interface RuleAccordionProps {
   rules: Rule[];
@@ -28,7 +28,10 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
     <div className={`divide-y divide-gray-100 dark:divide-slate-800 transition-opacity duration-300 ${disabled ? 'opacity-50 pointer-events-none saturate-50' : ''}`}>
       {rules.map((rule) => {
         const isOpen = openRuleId === rule.id;
-        const linkedGeo = geometries.find(g => g.id === rule.geometryId);
+        const linkedGeos = rule.geometryIds && rule.geometryIds.length > 0
+          ? geometries.filter(g => rule.geometryIds!.includes(g.id))
+          : (rule.geometryId ? geometries.filter(g => g.id === rule.geometryId) : []);
+        const hasGeos = linkedGeos.length > 0;
 
         return (
           <div key={rule.id} className={`transition-all duration-300 ${isOpen ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : 'bg-white dark:bg-slate-900'}`}>
@@ -52,7 +55,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                   <h3 className={`font-semibold transition-colors ${isOpen ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-slate-300'}`}>
                     {rule.name}
                   </h3>
-                  {linkedGeo && (
+                  {hasGeos && (
                     <span className="text-[10px] bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded font-bold uppercase">
                       משויך למיקום גיאוגרפי
                     </span>
@@ -64,7 +67,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                 <button
                   onClick={() => onEdit(rule)}
                   className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-800 rounded transition-all"
-                  title="ערוך כלל"
+                  title="ערוך חוק"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -73,7 +76,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                 <button
                   onClick={() => onDelete(rule.id)}
                   className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-white dark:hover:bg-slate-800 rounded transition-all"
-                  title="מחק כלל"
+                  title="מחק חוק"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -83,21 +86,32 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
             </div>
 
             {isOpen && (
-              <div className="pr-14 pb-6 pt-0 animate-slideDown overflow-hidden">
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">תיאור</span>
-                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed italic border-r-2 border-indigo-200 dark:border-indigo-900 pr-3">
-                      "{rule.description}"
-                    </p>
-                  </div>
-                  {linkedGeo && (
-                    <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 font-medium">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      ממוקם על {linkedGeo.name}
+              <div className="px-4 pb-6 pt-0 animate-slideDown overflow-hidden">
+                <div className="space-y-4 flex flex-col items-center">
+                  {rule.parameters && Object.keys(rule.parameters).length > 0 && (
+                    <div className="bg-gray-50/50 dark:bg-slate-800/20 rounded-xl p-4 border border-gray-100 dark:border-slate-800/60 w-full max-w-sm mx-auto text-right mt-2 mb-4">
+                        <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-3">פרמטרים</span>
+                        <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                          {Object.entries(rule.parameters).map(([key, val]) => (
+                            <div key={key} className="flex flex-col">
+                              <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500">{PARAM_LABELS[key] || key}</span>
+                              <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+                                {val !== undefined && val !== null && val !== '' ? String(val) : '-'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                    </div>
+                  )}
+                  {hasGeos && (
+                    <div className="w-full max-w-sm mx-auto text-right">
+                      <div className="inline-flex items-center justify-start gap-2 text-xs bg-green-50/50 dark:bg-green-900/10 px-3 py-2 rounded-lg text-green-700 dark:text-green-400 font-medium whitespace-normal mt-1 border border-green-100 dark:border-green-800/50 w-full">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>ממוקם על {linkedGeos.map(g => g.name).join(', ')}</span>
+                      </div>
                     </div>
                   )}
                 </div>

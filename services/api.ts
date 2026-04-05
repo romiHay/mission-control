@@ -16,22 +16,30 @@ export const api = {
         const res = await fetch(`${BASE_URL}/rules`);
         return res.json();
     },
-    addRule: async (rule: Rule, newGeo?: MissionGeometry) => {
+    addRule: async (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
+        const geos = Array.isArray(newGeo) ? newGeo : (newGeo ? [newGeo] : (newGeos || []));
         const res = await fetch(`${BASE_URL}/rules`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rule, newGeo }),
+            body: JSON.stringify({ rule, newGeos: geos }),
         });
-        if (!res.ok) throw new Error('Failed to save rule');
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            throw new Error(err?.detail || 'שגיאה בשמירת החוק מול השרת');
+        }
         return res.json();
     },
-    updateRule: async (rule: Rule, newGeo?: MissionGeometry) => {
+    updateRule: async (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
+        const geos = Array.isArray(newGeo) ? newGeo : (newGeo ? [newGeo] : (newGeos || []));
         const res = await fetch(`${BASE_URL}/rules/${rule.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rule, newGeo }),
+            body: JSON.stringify({ rule, newGeos: geos }),
         });
-        if (!res.ok) throw new Error('Failed to update rule');
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            throw new Error(err?.detail || 'שגיאה בעדכון החוק מול השרת');
+        }
         return res.json();
     },
     deleteRule: async (ruleId: string) => {
@@ -39,6 +47,22 @@ export const api = {
             method: 'DELETE',
         });
         if (!res.ok) throw new Error('Failed to delete rule');
+        return res.json();
+    },
+    deleteGeometry: async (geoId: string) => {
+        const res = await fetch(`${BASE_URL}/geometries/${geoId}`, {
+            method: 'DELETE',
+        });
+        if (!res.ok) throw new Error('Failed to delete geometry');
+        return res.json();
+    },
+    deleteGeometries: async (geoIds: string[]) => {
+        const res = await fetch(`${BASE_URL}/geometries/bulk-delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(geoIds),
+        });
+        if (!res.ok) throw new Error('Failed to bulk delete geometries');
         return res.json();
     }
 };

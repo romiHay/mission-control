@@ -72,8 +72,9 @@ def migrate():
 
                 CREATE TABLE IF NOT EXISTS web_general.geometries (
                     uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                    geometry_name TEXT UNIQUE NOT NULL,
-                    geometry geometry NOT NULL
+                    geometry_name TEXT NOT NULL,
+                    geometry geometry NOT NULL,
+                    created_by TEXT DEFAULT 'system'
                 );
 
                 CREATE TABLE IF NOT EXISTS web_general.users (
@@ -117,7 +118,7 @@ def migrate():
                 CREATE TABLE IF NOT EXISTS missions.qa (
                     uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                     checks_amount INT NOT NULL,
-                    geometry_uuid UUID NOT NULL,
+                    geometry_uuids UUID[] NOT NULL,
                     frequency TEXT NOT NULL,
                     code_name TEXT NOT NULL,
                     code_type TEXT NOT NULL,
@@ -134,79 +135,79 @@ def migrate():
                     mpt_values TEXT NOT NULL,
                     type TEXT NOT NULL,
                     status TEXT NOT NULL,
-                    geometry_uuid UUID,
+                    geometry_uuids UUID[],
                     from_time TIMESTAMP,
                     created_at TIMESTAMP DEFAULT now(),
                     updated_at TIMESTAMP DEFAULT now()
                 );
             """)
 
-            # 4. Clean Data for Fresh Seed
-            print("Cleaning data...")
-            cur.execute("DELETE FROM web_general.geometry_to_team")
-            cur.execute("DELETE FROM web_general.user_to_team")
-            cur.execute("DELETE FROM missions.qa")
-            cur.execute("DELETE FROM missions.new_missions")
-            cur.execute("DELETE FROM web_general.geometries")
-            cur.execute("DELETE FROM web_general.missions_data")
-            cur.execute("DELETE FROM web_general.users")
-            cur.execute("DELETE FROM web_general.teams")
+            # # 4. Clean Data for Fresh Seed
+            # print("Cleaning data...")
+            # cur.execute("DELETE FROM web_general.geometry_to_team")
+            # cur.execute("DELETE FROM web_general.user_to_team")
+            # cur.execute("DELETE FROM missions.qa")
+            # cur.execute("DELETE FROM missions.new_missions")
+            # cur.execute("DELETE FROM web_general.geometries")
+            # cur.execute("DELETE FROM web_general.missions_data")
+            # cur.execute("DELETE FROM web_general.users")
+            # cur.execute("DELETE FROM web_general.teams")
 
-            # 5. Seed Missions
-            print("Seeding missions...")
-            mission_uuids = []
-            for m in MOCK_DATA["missions_data"]:
-                cur.execute(
-                    "INSERT INTO web_general.missions_data (mission_name_english, mission_name_hebrew) VALUES (%s, %s) RETURNING uuid",
-                    (m["mission_name_english"], m["mission_name_hebrew"])
-                )
-                mission_uuids.append(cur.fetchone()["uuid"])
+            # # 5. Seed Missions
+            # print("Seeding missions...")
+            # mission_uuids = []
+            # for m in MOCK_DATA["missions_data"]:
+            #     cur.execute(
+            #         "INSERT INTO web_general.missions_data (mission_name_english, mission_name_hebrew) VALUES (%s, %s) RETURNING uuid",
+            #         (m["mission_name_english"], m["mission_name_hebrew"])
+            #     )
+            #     mission_uuids.append(cur.fetchone()["uuid"])
 
-            # 6. Seed Users
-            print("Seeding users...")
-            user_uuids = []
-            for u in MOCK_DATA["users"]:
-                cur.execute(
-                    "INSERT INTO web_general.users (display_name, full_display_name, origin_name, email, hierarchy) VALUES (%s, %s, %s, %s, %s) RETURNING uuid",
-                    (u["display_name"], u["full_display_name"], u["origin_name"], u["email"], u["hierarchy"])
-                )
-                user_uuids.append(cur.fetchone()["uuid"])
+            # # 6. Seed Users
+            # print("Seeding users...")
+            # user_uuids = []
+            # for u in MOCK_DATA["users"]:
+            #     cur.execute(
+            #         "INSERT INTO web_general.users (display_name, full_display_name, origin_name, email, hierarchy) VALUES (%s, %s, %s, %s, %s) RETURNING uuid",
+            #         (u["display_name"], u["full_display_name"], u["origin_name"], u["email"], u["hierarchy"])
+            #     )
+            #     user_uuids.append(cur.fetchone()["uuid"])
 
-            # 7. Seed Teams
-            print("Seeding teams...")
-            team_uuids = []
-            for t in MOCK_DATA["teams"]:
-                cur.execute(
-                    "INSERT INTO web_general.teams (team_name, team, parent_uuid) VALUES (%s, %s, %s) RETURNING uuid",
-                    (t["team_name"], t["team"], t["parent_uuid"])
-                )
-                team_uuids.append(cur.fetchone()["uuid"])
+            # # 7. Seed Teams
+            # print("Seeding teams...")
+            # team_uuids = []
+            # for t in MOCK_DATA["teams"]:
+            #     cur.execute(
+            #         "INSERT INTO web_general.teams (team_name, team, parent_uuid) VALUES (%s, %s, %s) RETURNING uuid",
+            #         (t["team_name"], t["team"], t["parent_uuid"])
+            #     )
+            #     team_uuids.append(cur.fetchone()["uuid"])
 
-            # 8. Seed Geometries
-            print("Seeding geometries...")
-            geometry_uuids = []
-            for g in MOCK_DATA["geometries"]:
-                cur.execute(
-                    "INSERT INTO web_general.geometries (geometry_name, geometry) VALUES (%s, ST_GeomFromText(%s, 4326)) RETURNING uuid",
-                    (g["geometry_name"], g["geometry"])
-                )
-                geometry_uuids.append(cur.fetchone()["uuid"])
+            # # 8. Seed Geometries
+            # print("Seeding geometries...")
+            # geometry_uuids = []
+            # for g in MOCK_DATA["geometries"]:
+            #     cur.execute(
+            #         "INSERT INTO web_general.geometries (geometry_name, geometry) VALUES (%s, ST_GeomFromText(%s, 4326)) RETURNING uuid",
+            #         (g["geometry_name"], g["geometry"])
+            #     )
+            #     geometry_uuids.append(cur.fetchone()["uuid"])
 
-            # 9. Relationships
-            print("Setting up relationships...")
-            roles = ['Team Lead', 'Operator', 'Analyst', 'Viewer']
-            for u_id in user_uuids:
-                cur.execute(
-                    "INSERT INTO web_general.user_to_team (team_uuid, user_uuid, user_role) VALUES (%s, %s, %s)",
-                    (random.choice(team_uuids), u_id, random.choice(roles))
-                )
+            # # 9. Relationships
+            # print("Setting up relationships...")
+            # roles = ['Team Lead', 'Operator', 'Analyst', 'Viewer']
+            # for u_id in user_uuids:
+            #     cur.execute(
+            #         "INSERT INTO web_general.user_to_team (team_uuid, user_uuid, user_role) VALUES (%s, %s, %s)",
+            #         (random.choice(team_uuids), u_id, random.choice(roles))
+            #     )
 
-            for i, m_id in enumerate(mission_uuids):
-                g_id = geometry_uuids[i % len(geometry_uuids)]
-                cur.execute(
-                    "INSERT INTO web_general.geometry_to_team (geometry_uuid, mission_uuid, team_uuid) VALUES (%s, %s, %s)",
-                    (g_id, m_id, random.choice(team_uuids))
-                )
+            # for i, m_id in enumerate(mission_uuids):
+            #     g_id = geometry_uuids[i % len(geometry_uuids)]
+            #     cur.execute(
+            #         "INSERT INTO web_general.geometry_to_team (geometry_uuid, mission_uuid, team_uuid) VALUES (%s, %s, %s)",
+            #         (g_id, m_id, random.choice(team_uuids))
+            #     )
 
             conn.commit()
             print("Migration complete!")

@@ -9,6 +9,7 @@ export interface MissionGeometry {
   coordinates: number[] | number[][]; // [lat, lng] or [[lat, lng], ...]
   name: string;
   ruleId?: string; // Links back to a rule if applicable
+  createdBy: 'system' | 'user'; // Source of geometry creation
 }
 
 export interface Rule {
@@ -18,6 +19,7 @@ export interface Rule {
   description: string;
   value: string;
   geometryId?: string;
+  geometryIds?: string[];
   // Dynamic parameters for different mission types
   parameters?: Record<string, any>;
 }

@@ -47,22 +47,14 @@ const App: React.FC = () => {
 
   const selectedMission = missions.find(m => m.id === selectedMissionId) || null;
 
-  const handleAddRule = async (newRule: Rule, newGeo?: MissionGeometry) => {
-    try {
-      await api.addRule(newRule, newGeo);
-      await fetchData();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleAddRule = async (newRule: Rule, newGeo?: MissionGeometry | MissionGeometry[]) => {
+    await api.addRule(newRule, newGeo);
+    await fetchData();
   };
 
-  const handleUpdateRule = async (updatedRule: Rule, newGeo?: MissionGeometry) => {
-    try {
-      await api.updateRule(updatedRule, newGeo);
-      await fetchData();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleUpdateRule = async (updatedRule: Rule, newGeo?: MissionGeometry | MissionGeometry[]) => {
+    await api.updateRule(updatedRule, newGeo);
+    await fetchData();
   };
 
   const handleDeleteRule = async (ruleId: string) => {
@@ -70,6 +62,26 @@ const App: React.FC = () => {
       await api.deleteRule(ruleId);
       await fetchData();
       if (activeRuleId === ruleId) setActiveRuleId(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteGeometry = async (geoId: string) => {
+    try {
+      await api.deleteGeometry(geoId);
+      await fetchData();
+      if (focusedGeoId === geoId) setFocusedGeoId(null);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteGeometries = async (geoIds: string[]) => {
+    try {
+      await api.deleteGeometries(geoIds);
+      await fetchData();
+      if (focusedGeoId && geoIds.includes(focusedGeoId)) setFocusedGeoId(null);
     } catch (err) {
       console.error(err);
     }
@@ -120,6 +132,8 @@ const App: React.FC = () => {
             onDeleteRule={handleDeleteRule}
             onAddBulkRules={handleAddBulkRules}
             onUpdateBulkRules={handleUpdateBulkRules}
+            onDeleteGeometry={handleDeleteGeometry}
+            onDeleteGeometries={handleDeleteGeometries}
             onSelectSpatialAsset={(mId, rId, gId) => { setSelectedMissionId(mId); setActiveRuleId(rId || null); setFocusedGeoId(gId || null); }}
             darkMode={darkMode}
             onSetActiveRule={id => {
