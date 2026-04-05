@@ -383,6 +383,23 @@ def delete_geometry(geo_id: str):
         print(f"Error deleting geometry: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete geometry")
 
+@app.post("/api/geometries/bulk-delete")
+def bulk_delete_geometries(geo_ids: list[str] = Body(...)):
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                # Cleanup geometry_to_team mapping first
+                cur.execute("DELETE FROM web_general.geometry_to_team WHERE geometry_uuid = ANY(%s)", (geo_ids,))
+                
+                # Basic protection: only delete if created_by='user'
+                cur.execute("DELETE FROM web_general.geometries WHERE uuid = ANY(%s) AND created_by = 'user'", (geo_ids,))
+                
+                conn.commit()
+                return {"message": f"Successfully deleted {cur.rowcount} geometries"}
+    except Exception as e:
+        print(f"Error bulk deleting geometries: {e}")
+        raise HTTPException(status_code=500, detail="Failed to bulk delete geometries")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

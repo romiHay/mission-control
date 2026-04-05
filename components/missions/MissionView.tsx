@@ -20,6 +20,7 @@ interface MissionViewProps {
   onAddBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
   onUpdateBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
   onDeleteGeometry: (id: string) => void;
+  onDeleteGeometries: (ids: string[]) => void;
   onSelectSpatialAsset: (missionId: string, ruleId?: string, geoId?: string) => void;
   onSetActiveRule: (id: string | null) => void;
   darkMode: boolean;
@@ -27,7 +28,7 @@ interface MissionViewProps {
 
 const MissionView: React.FC<MissionViewProps> = ({
   mission, rules, geometries, activeRuleId, focusedGeoId,
-  onAddRule, onUpdateRule, onDeleteRule, onAddBulkRules, onUpdateBulkRules, onDeleteGeometry,
+  onAddRule, onUpdateRule, onDeleteRule, onAddBulkRules, onUpdateBulkRules, onDeleteGeometry, onDeleteGeometries,
   onSelectSpatialAsset, onSetActiveRule, darkMode
 }) => {
   const [openRuleId, setOpenRuleId] = useState<string | null>(activeRuleId);
@@ -40,6 +41,7 @@ const MissionView: React.FC<MissionViewProps> = ({
   const [toggles, setToggles] = useState({ reset: 0, zoomIn: 0, zoomOut: 0 });
   const [ruleToDeleteId, setRuleToDeleteId] = useState<string | null>(null);
   const [geometryToDeleteId, setGeometryToDeleteId] = useState<string | null>(null);
+  const [geometriesToDeleteIds, setGeometriesToDeleteIds] = useState<string[]>([]);
 
   useEffect(() => setOpenRuleId(activeRuleId), [activeRuleId]);
 
@@ -224,6 +226,7 @@ const MissionView: React.FC<MissionViewProps> = ({
               darkMode={darkMode} drawingMode={drawingState.isInline ? null : drawingState.mode} onGeometryCaptured={handleGeometryCaptured}
               onCancelDrawing={() => { setDrawingState({ mode: null, isInline: false }); setIsFormOpen(true); }}
               onDeleteGeometry={setGeometryToDeleteId}
+              onDeleteGeometries={setGeometriesToDeleteIds}
               resetViewToggle={toggles.reset} zoomInToggle={toggles.zoomIn} zoomOutToggle={toggles.zoomOut}
             />
           </div>
@@ -315,6 +318,43 @@ const MissionView: React.FC<MissionViewProps> = ({
                   onClick={() => {
                     onDeleteGeometry(geometryToDeleteId);
                     setGeometryToDeleteId(null);
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
+                >
+                  מחק
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {geometriesToDeleteIds.length > 0 && (
+        <div className="absolute inset-0 z-[5000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-[280px] border border-gray-100 dark:border-slate-800 animate-slideUp">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight">למחוק מפה?</h4>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mt-1 px-2">
+                  {geometriesToDeleteIds.length} גיאומטריות אלה ימחקו מהמערכת לצמיתות.
+                </p>
+              </div>
+              <div className="flex gap-2 w-full pt-2">
+                <button
+                  onClick={() => setGeometriesToDeleteIds([])}
+                  className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
+                >
+                  ביטול
+                </button>
+                <button
+                  onClick={() => {
+                    onDeleteGeometries(geometriesToDeleteIds);
+                    setGeometriesToDeleteIds([]);
                   }}
                   className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
                 >

@@ -55,5 +55,14 @@ export const api = {
         });
         if (!res.ok) throw new Error('Failed to delete geometry');
         return res.json();
+    },
+    deleteGeometries: async (geoIds: string[]) => {
+        const res = await fetch(`${BASE_URL}/geometries/bulk-delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(geoIds),
+        });
+        if (!res.ok) throw new Error('Failed to bulk delete geometries');
+        return res.json();
     }
 };
