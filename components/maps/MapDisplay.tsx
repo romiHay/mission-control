@@ -249,10 +249,10 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       popupDiv.innerHTML = `
         <div style="font-family: sans-serif; min-width: 140px; padding: 2px; text-align: right;" dir="rtl">
           <div style="font-weight: 800; font-size: 14px; margin-bottom: 4px; color: ${darkMode ? '#e2e8f0' : '#1f2937'};">
-            ${associatedRule ? associatedRule.name : (geo.name || 'ללא שם')}
+            ${geo.name || 'ללא שם'}
           </div>
-          <div style="font-size: 11px; font-weight: 600; color: ${hasRule ? '#22c55e' : '#ef4444'}; display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
-            <span style="font-size: 14px;">${hasRule ? '✓' : '⚠'}</span> ${hasRule ? 'חוק הוגדר' : 'חוק חסר'}
+          <div style="font-size: 11px; font-weight: 600; color: ${hasRule ? '#22c55e' : '#ef4444'}; display: flex; align-items: center; justify-content: flex-start; gap: 4px;">
+            <span style="font-size: 14px;">${hasRule ? '✓' : '⚠'}</span> ${hasRule && associatedRule ? `חוק מוגדר: ${associatedRule.name}` : 'חוק חסר'}
           </div>
           ${(!hasRule && geo.createdBy === 'user') ? `
           <button id="del-btn-${geo.id}" style="margin-top: 8px; width: 100%; padding: 6px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; transition: opacity 0.2s;" onmousedown="this.style.opacity=0.7" onmouseup="this.style.opacity=1" onmouseleave="this.style.opacity=1">

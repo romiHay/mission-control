@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { Rule, MissionGeometry } from '../../types';
+import { PARAM_LABELS } from '../../utils/constants';
 
 interface RuleAccordionProps {
   rules: Rule[];
@@ -86,21 +86,32 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
             </div>
 
             {isOpen && (
-              <div className="pr-14 pb-6 pt-0 animate-slideDown overflow-hidden">
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-1">תיאור</span>
-                    <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed italic border-r-2 border-indigo-200 dark:border-indigo-900 pr-3">
-                      "{rule.description}"
-                    </p>
-                  </div>
+              <div className="px-4 pb-6 pt-0 animate-slideDown overflow-hidden">
+                <div className="space-y-4 flex flex-col items-center">
+                  {rule.parameters && Object.keys(rule.parameters).length > 0 && (
+                    <div className="bg-gray-50/50 dark:bg-slate-800/20 rounded-xl p-4 border border-gray-100 dark:border-slate-800/60 w-full max-w-sm mx-auto text-right mt-2 mb-4">
+                        <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-3">פרמטרים</span>
+                        <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                          {Object.entries(rule.parameters).map(([key, val]) => (
+                            <div key={key} className="flex flex-col">
+                              <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500">{PARAM_LABELS[key] || key}</span>
+                              <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+                                {val !== undefined && val !== null && val !== '' ? String(val) : '-'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                    </div>
+                  )}
                   {hasGeos && (
-                    <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 font-medium whitespace-normal">
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      ממוקם על {linkedGeos.map(g => g.name).join(', ')}
+                    <div className="w-full max-w-sm mx-auto text-right">
+                      <div className="inline-flex items-center justify-start gap-2 text-xs bg-green-50/50 dark:bg-green-900/10 px-3 py-2 rounded-lg text-green-700 dark:text-green-400 font-medium whitespace-normal mt-1 border border-green-100 dark:border-green-800/50 w-full">
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>ממוקם על {linkedGeos.map(g => g.name).join(', ')}</span>
+                      </div>
                     </div>
                   )}
                 </div>
