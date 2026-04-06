@@ -63,8 +63,13 @@ const MissionView: React.FC<MissionViewProps> = ({
     let newGeo: MissionGeometry | undefined;
     if (tempGeo) {
       newGeo = {
-        id: `g-${Date.now()}`, missionId: mission.id, name: `Asset for ${rule.name}`,
-        type: tempGeo.type, coordinates: tempGeo.coordinates, ruleId: rule.id, createdBy: 'user'
+        id: undefined as any,
+        missionId: mission.id,
+        name: `Asset for ${rule.name}`,
+        type: tempGeo.type,
+        coordinates: tempGeo.coordinates,
+        ruleId: rule.id,
+        createdBy: 'user'
       };
     }
     editingRule ? onUpdateRule(rule, newGeo) : onAddRule(rule, newGeo);
@@ -73,9 +78,7 @@ const MissionView: React.FC<MissionViewProps> = ({
   };
 
   const handleSaveBulkRules = async (baseRuleData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any, name?: string }[]) => {
-    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
     const isUpdating = !!baseRuleData.id;
-    const ruleId = baseRuleData.id || `r-${uniqueSuffix}`;
     const ruleName = baseRuleData.name || 'כלל מרובה גיאומטריות';
 
     const existingGeoIds: string[] = [];
@@ -85,27 +88,20 @@ const MissionView: React.FC<MissionViewProps> = ({
       if (item.id) {
         existingGeoIds.push(item.id);
       } else {
-        const newGeoId = `g-${uniqueSuffix}-${index}`;
-        let formattedCoords = item.coords;
-        if (item.type === 'Point' && Array.isArray(item.coords)) {
-          formattedCoords = [parseFloat(item.coords[0]), parseFloat(item.coords[1])];
-        } else if (item.type === 'Polygon' && Array.isArray(item.coords)) {
-          formattedCoords = item.coords.map((p: any) => [parseFloat(p[0]), parseFloat(p[1])]);
-        }
         newGeos.push({
-          id: newGeoId,
+          id: undefined as any,
           missionId: mission.id,
           name: item.name || `מיקום ${index + 1} עבור ${ruleName}`,
           type: item.type,
-          coordinates: formattedCoords,
-          ruleId: ruleId,
+          coordinates: item.coords,
+          ruleId: baseRuleData.id as any,
           createdBy: 'user'
         });
       }
     });
 
     const newRule: Rule = {
-      id: ruleId,
+      id: baseRuleData.id as any,
       missionId: mission.id,
       name: ruleName,
       description: baseRuleData.description || '',

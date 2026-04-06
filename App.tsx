@@ -89,10 +89,8 @@ const App: React.FC = () => {
 
   const handleAddBulkRules = async (items: { rule: Rule, newGeo?: MissionGeometry }[]) => {
     try {
-      // Process all sequentially to ensure order, but only fetch data once at the end
-      for (const item of items) {
-        await api.addRule(item.rule, item.newGeo);
-      }
+      const payload = items.map(item => ({ rule: item.rule, newGeos: item.newGeo ? [item.newGeo] : [] }));
+      await api.addBulkRules(payload as any);
       await fetchData();
     } catch (err) {
       console.error('Bulk Add Error:', err);
@@ -101,9 +99,8 @@ const App: React.FC = () => {
 
   const handleUpdateBulkRules = async (items: { rule: Rule, newGeo?: MissionGeometry }[]) => {
     try {
-      for (const item of items) {
-        await api.updateRule(item.rule, item.newGeo);
-      }
+      const payload = items.map(item => ({ rule: item.rule, newGeos: item.newGeo ? [item.newGeo] : [] }));
+      await api.updateBulkRules(payload as any);
       await fetchData();
     } catch (err) {
       console.error('Bulk Update Error:', err);

@@ -4,11 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
-    "start": "npm run db:create_db_environment && npm run dev",
-    "frontend": "vite",
-    "backend": "py backend/main.py",
-    "db:create_db_environment": "py backend/create_db_environment.py",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "hmr": "powershell (ls App.tsx).LastWriteTime = Get-Date"

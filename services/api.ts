@@ -64,5 +64,29 @@ export const api = {
         });
         if (!res.ok) throw new Error('Failed to bulk delete geometries');
         return res.json();
+    },
+    addBulkRules: async (items: any[]) => {
+        const res = await fetch(`${BASE_URL}/rules/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(items),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            throw new Error(err?.detail || 'שגיאה בשמירת חוקים מול השרת');
+        }
+        return res.json();
+    },
+    updateBulkRules: async (items: any[]) => {
+        const res = await fetch(`${BASE_URL}/rules/bulk`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(items),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            throw new Error(err?.detail || 'שגיאה בעדכון חוקים מול השרת');
+        }
+        return res.json();
     }
 };

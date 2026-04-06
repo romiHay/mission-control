@@ -152,7 +152,7 @@ const RuleForm: React.FC<RuleFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
-      id: initialData?.id || `r-${Date.now()}`,
+      id: initialData?.id as any,
       missionId,
       name: name || params.code_name || params.nm_values || 'Untitled Rule',
       description: description || params.frequency || params.status || '',
