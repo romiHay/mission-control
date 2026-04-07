@@ -46,7 +46,11 @@ const MissionView: React.FC<MissionViewProps> = ({
   useEffect(() => setOpenRuleId(activeRuleId), [activeRuleId]);
 
   const missionRules = rules.filter(r => r.missionId === mission.id);
-  const missionGeometries = geometries.filter(g => g.missionId === mission.id);
+  
+  // The big map should only show explicitly assigned geometries
+  const assignedGeometries = geometries.filter(g => g.missionId === mission.id);
+  // The creator form mini-map will also ONLY see the current mission's geometries
+  const eligibleGeometries = geometries.filter(g => g.missionId === mission.id);
 
   const handleStartDrawing = (type: GeometryType, isInline?: boolean) => {
     setDrawingState({ mode: type, isInline: !!isInline });
@@ -185,11 +189,11 @@ const MissionView: React.FC<MissionViewProps> = ({
               onToggle={onSetActiveRule}
               onEdit={r => { setEditingRule(r); setTempGeo(null); setIsFormOpen(true); }}
               onDelete={setRuleToDeleteId}
-              geometries={missionGeometries}
+              geometries={assignedGeometries}
               disabled={isFormOpen}
             />
           ) : (
-            <MissionStatsView mission={mission} rules={missionRules} geometries={missionGeometries} />
+            <MissionStatsView mission={mission} rules={missionRules} geometries={assignedGeometries} />
           )}
         </div>
 
@@ -217,7 +221,7 @@ const MissionView: React.FC<MissionViewProps> = ({
         <div className="h-full w-full p-4">
           <div className={`w-full h-full bg-gray-200 dark:bg-slate-800 rounded-xl overflow-hidden shadow-inner border border-gray-200 dark:border-slate-800 transition-all ${drawingState.mode && !drawingState.isInline ? 'ring-4 ring-indigo-500' : ''}`}>
             <MapDisplay
-              geometries={missionGeometries} focusedGeoId={focusedGeoId} focusedRuleId={viewMode === 'rules' ? openRuleId : null}
+              geometries={assignedGeometries} focusedGeoId={focusedGeoId} focusedRuleId={viewMode === 'rules' ? openRuleId : null}
               rules={rules} isVisible={viewMode === 'rules'} onSelectAsset={onSelectSpatialAsset} currentMissionId={mission.id}
               darkMode={darkMode} drawingMode={drawingState.isInline ? null : drawingState.mode} onGeometryCaptured={handleGeometryCaptured}
               onCancelDrawing={() => { setDrawingState({ mode: null, isInline: false }); setIsFormOpen(true); }}
@@ -235,10 +239,11 @@ const MissionView: React.FC<MissionViewProps> = ({
           missionId={mission.id}
           missionName={mission.name}
           missionNameHebrew={mission.nameHebrew}
+          uiSchema={mission.ui_schema}
           initialData={editingRule}
           onClose={() => { setIsFormOpen(false); setEditingRule(undefined); }}
           onSaveBulk={handleSaveBulkRules}
-          availableGeometries={missionGeometries}
+          availableGeometries={eligibleGeometries}
           darkMode={darkMode}
         />
       )}
@@ -246,7 +251,7 @@ const MissionView: React.FC<MissionViewProps> = ({
       {isBulkEditFormOpen && (
         <BulkEditRuleForm
           rules={missionRules}
-          geometries={missionGeometries}
+          geometries={assignedGeometries}
           missionName={mission.name}
           onClose={() => setIsBulkEditFormOpen(false)}
           onSave={handleSaveBulkEditRules}

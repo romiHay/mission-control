@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { Rule, MissionGeometry, GeometryType } from '../../types';
+import { Rule, MissionGeometry, GeometryType, FormFieldDef } from '../../types';
 import { PARAM_LABELS, PARAM_OPTIONS } from '../../utils/constants';
 import GenericFormField from '../ui/GenericFormField';
 import { GenericInput, GenericSelect } from '../ui/GenericInputs';
@@ -11,6 +11,7 @@ interface BulkRuleFormProps {
     missionId: string;
     missionName: string;
     missionNameHebrew: string;
+    uiSchema?: FormFieldDef[];
     initialData?: Rule;
     onClose: () => void;
     onSaveBulk: (baseData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any, name?: string }[]) => Promise<void>;
@@ -25,6 +26,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     onClose,
     onSaveBulk,
     availableGeometries,
+    uiSchema,
     initialData,
     darkMode
 }) => {
@@ -108,6 +110,8 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         if (!mapRef.current || mapInstanceRef.current) return;
 
         const m = L.map(mapRef.current, {
+            center: [31.5, 34.8],
+            zoom: 8,
             zoomControl: true,
             attributionControl: false,
             scrollWheelZoom: true,
@@ -124,7 +128,11 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         layerGroupRef.current = group;
         mapInstanceRef.current = m;
 
-        m.invalidateSize();
+        // Force Leaflet to recalculate its bounds inside the modal!
+        setTimeout(() => {
+            m.invalidateSize();
+            window.dispatchEvent(new Event('resize'));
+        }, 300);
 
         return () => {
             m.remove();
@@ -443,20 +451,12 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     const handleSave = async () => {
         // --- FORM VALIDATION ---
         const errs: string[] = [];
-        if (missionName === 'qa') {
-            if (!params.code_name) errs.push('שדה "שם קוד" הינו שדה חובה');
-            if (!params.frequency) errs.push('שדה "תדירות" הינו שדה חובה');
-            if ((params.frequency === 'חודשי' || params.frequency === 'שבועי') && !params.code_type) {
-                errs.push('שדה "סוג קוד" הינו שדה חובה לתדירות נבחרת זו');
-            }
-            if (params.check_precent === undefined || params.check_precent === '') errs.push('שדה "אחוז בדיקה" הינו שדה חובה');
-        } else if (missionName === 'new_missions') {
-            if (!params.nm_values) errs.push('שדה "ערכי NM" הינו שדה חובה');
-            if (!params.type) errs.push('שדה "סוג" הינו שדה חובה');
-            if (!params.status) errs.push('שדה "סטטוס" הינו שדה חובה');
-            if (!params.mpt_values) errs.push('שדה "ערכי MPT" הינו שדה חובה');
-            if (!params.h_values) errs.push('שדה "ערכי H" הינו שדה חובה');
-            if (!params.nm_id) errs.push('שדה "מזהה NM" הינו שדה חובה');
+        if (uiSchema) {
+            uiSchema.forEach(field => {
+                if (!params[field.key]) {
+                    errs.push(`שדה "${field.label}" הינו שדה חובה`);
+                }
+            });
         }
 
         if (errs.length > 0) {
@@ -594,8 +594,8 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                             <div className="w-full">
                                 <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight mb-3">שם לגיאומטריה קבועה</h4>
                                 <div className="w-full text-right mt-2">
-                                    <label className="text-xs font-bold text-gray-500 mb-2 block">הכנס שם עבור המיקום החדש:</label>
-                                    <input 
+                                    <label className="text-xs font-bold text-gray-500 dark:text-white mb-2 block">הכנס שם עבור הגיאומטריה שדגמת:</label>
+                                    <input
                                         type="text"
                                         autoFocus
                                         value={pendingGeoName}
@@ -633,54 +633,34 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
 
             <div className="space-y-8">
                 <div className="space-y-4">
-                    {missionName === 'qa' && (
-                        <>
-                            <GenericFormField label={PARAM_LABELS.code_name} required={true}>
-                                <GenericInput value={params.code_name} onChange={v => updateParam('code_name', v)} placeholder="לדוגמה: QA_ZONE_1" />
-                            </GenericFormField>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <GenericFormField label={PARAM_LABELS.frequency} required={true} fullWidth={!(params.frequency === 'חודשי' || params.frequency === 'שבועי')}>
-                                    <GenericSelect value={params.frequency} onChange={v => updateParam('frequency', v)} options={PARAM_OPTIONS.frequency} placeholder="בחר תדירות" />
+                    <div className="grid grid-cols-2 gap-4">
+                        {(uiSchema || []).map((field) => {
+                            if (field.condition) {
+                                const currentDependentValue = params[field.condition.field];
+                                if (!field.condition.values.includes(currentDependentValue)) {
+                                    return null;
+                                }
+                            }
+                            return (
+                                <GenericFormField key={field.key} label={field.label} required={true}>
+                                    {field.type === 'select' ? (
+                                        <GenericSelect
+                                            value={params[field.key] || ''}
+                                            onChange={(v) => updateParam(field.key, v)}
+                                            options={field.options || []}
+                                            placeholder="בחר..."
+                                        />
+                                    ) : (
+                                        <GenericInput
+                                            type={field.type}
+                                            defaultValue={params[field.key] || ''}
+                                            onBlur={(e: any) => updateParam(field.key, e.target.value)}
+                                        />
+                                    )}
                                 </GenericFormField>
-                                {(params.frequency === 'חודשי' || params.frequency === 'שבועי') && (
-                                    <GenericFormField label={PARAM_LABELS.code_type} required={true}>
-                                        <GenericInput value={params.code_type} onChange={v => updateParam('code_type', v)} placeholder="לדוגמה: VISUAL" />
-                                    </GenericFormField>
-                                )}
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <GenericFormField label={PARAM_LABELS.checks_amount}>
-                                    <GenericInput type="number" value={params.checks_amount} onChange={v => updateParam('checks_amount', v)} />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.check_precent + " (%)"} required={true}>
-                                    <GenericInput type="number" value={params.check_precent} onChange={v => updateParam('check_precent', v)} placeholder="1 - 100" min={0} max={100} />
-                                </GenericFormField>
-                            </div>
-                        </>
-                    )}
-
-                    {missionName === 'new_missions' && (
-                        <div className="grid grid-cols-2 gap-4">
-                            <GenericFormField label={PARAM_LABELS.nm_values} fullWidth required={true}>
-                                <GenericInput value={params.nm_values} onChange={v => updateParam('nm_values', v)} />
-                            </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.type} required={true}>
-                                <GenericInput value={params.type} onChange={v => updateParam('type', v)} />
-                            </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.status} required={true}>
-                                <GenericSelect value={params.status} onChange={v => updateParam('status', v)} options={PARAM_OPTIONS.status} placeholder="בחר סטטוס" />
-                            </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.mpt_values} required={true}>
-                                <GenericInput value={params.mpt_values} onChange={v => updateParam('mpt_values', v)} />
-                            </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.h_values} required={true}>
-                                <GenericInput value={params.h_values} onChange={v => updateParam('h_values', v)} />
-                            </GenericFormField>
-                            <GenericFormField label={PARAM_LABELS.nm_id} fullWidth required={true}>
-                                <GenericInput value={params.nm_id} onChange={v => updateParam('nm_id', v)} />
-                            </GenericFormField>
-                        </div>
-                    )}
+                            );
+                        })}
+                    </div>
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-slate-800">
