@@ -35,6 +35,8 @@ export interface FormFieldDef {
   type: 'text' | 'number' | 'select';
   options?: string[]; // Used if type is 'select'
   condition?: FormFieldCondition; // E.g., only show if frequency is "חודשי"
+  min?: number;
+  max?: number;
 }
 
 export interface Mission {
