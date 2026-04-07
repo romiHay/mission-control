@@ -24,11 +24,27 @@ export interface Rule {
   parameters?: Record<string, any>;
 }
 
+export interface FormFieldCondition {
+  field: string;
+  values: any[];
+}
+
+export interface FormFieldDef {
+  key: string;
+  label: string;
+  type: 'text' | 'number' | 'select';
+  options?: string[]; // Used if type is 'select'
+  condition?: FormFieldCondition; // E.g., only show if frequency is "חודשי"
+  min?: number;
+  max?: number;
+}
+
 export interface Mission {
   id: string;
   name: string;
   nameHebrew: string;
   description: string;
+  ui_schema?: FormFieldDef[]; // Optional fallback so old missions still compile
 }
 
 export interface MissionStats {

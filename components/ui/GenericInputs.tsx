@@ -1,36 +1,53 @@
 import React from 'react';
 
 export const GenericInput: React.FC<{
-    value: any;
-    onChange: (val: any) => void;
+    value?: any;
+    defaultValue?: any;
+    onChange?: (val: any) => void;
+    onBlur?: (e: any) => void;
     placeholder?: string;
     type?: string;
     required?: boolean;
     min?: number;
     max?: number;
-}> = ({ value, onChange, placeholder, type = "text", required = false, min, max }) => (
-    <input
-        required={required}
-        type={type}
-        value={value || ''}
-        min={min}
-        max={max}
-        onChange={e => {
-            let val: any = e.target.value;
-            if (type === 'number') {
-                val = val === '' ? '' : parseInt(val);
-                if (typeof val === 'number') {
-                    if (min !== undefined && val < min) val = min;
-                    if (max !== undefined && val > max) val = max;
+}> = ({ value, defaultValue, onChange, onBlur, placeholder, type = "text", required = false, min, max }) => {
+    // Local state for blazing fast uncontrolled typing
+    const [localVal, setLocalVal] = React.useState(value !== undefined ? value : (defaultValue || ''));
+
+    React.useEffect(() => {
+        if (value !== undefined) setLocalVal(value);
+        else if (defaultValue !== undefined && localVal === '') setLocalVal(defaultValue);
+    }, [value, defaultValue]);
+
+    return (
+        <input
+            required={required}
+            type={type}
+            value={localVal || ''}
+            min={min}
+            max={max}
+            onChange={e => {
+                let val: any = e.target.value;
+                if (type === 'number' && val !== '') {
+                    const parsed = parseInt(val);
+                    if (!isNaN(parsed)) {
+                        val = parsed;
+                        if (min !== undefined && val < min) val = min;
+                        if (max !== undefined && val > max) val = max;
+                    }
                 }
-            }
-            onChange(val);
-        }}
-        className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-500 dark:placeholder:text-slate-500 text-right selection:bg-indigo-100 dark:selection:bg-indigo-900/40 font-heebo"
-        placeholder={placeholder}
-        spellCheck={false}
-    />
-);
+                setLocalVal(val);
+                if (onChange) onChange(val);
+            }}
+            onBlur={e => {
+                if (onBlur) onBlur(e);
+            }}
+            className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 dark:text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all placeholder:text-gray-500 dark:placeholder:text-slate-500 text-right selection:bg-indigo-100 dark:selection:bg-indigo-900/40 font-heebo"
+            placeholder={placeholder}
+            spellCheck={false}
+        />
+    );
+};
 
 export const GenericSelect: React.FC<{
     value: string;
