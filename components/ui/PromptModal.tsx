@@ -1,0 +1,81 @@
+import React, { useState } from 'react';
+
+export interface PromptModalProps {
+    isOpen: boolean;
+    title: string;
+    label: string;
+    placeholder?: string;
+    initialValue?: string;
+    confirmText?: string;
+    cancelText?: string;
+    icon?: React.ReactNode;
+    iconColorClass?: string;
+    onConfirm: (value: string) => void;
+    onCancel: () => void;
+}
+
+const PromptModal: React.FC<PromptModalProps> = ({
+    isOpen, title, label, placeholder, initialValue = '',
+    confirmText = 'שמור', cancelText = 'ביטול',
+    iconColorClass = 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20',
+    icon, onConfirm, onCancel
+}) => {
+    const [value, setValue] = useState(initialValue);
+
+    // Update internal state when opened if needed, though we can just rely on standard unmount mapping
+    React.useEffect(() => {
+        if (isOpen) setValue(initialValue);
+    }, [isOpen, initialValue]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="absolute inset-0 z-[5000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
+            <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-sm border border-gray-100 dark:border-slate-800 animate-slideUp">
+                <div className="flex flex-col items-center text-center space-y-4">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm ${iconColorClass}`}>
+                        {icon || (
+                            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        )}
+                    </div>
+                    <div className="w-full">
+                        <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight mb-3">{title}</h4>
+                        <div className="w-full text-right mt-2">
+                            <label className="text-xs font-bold text-gray-500 dark:text-white mb-2 block">{label}</label>
+                            <input
+                                type="text"
+                                autoFocus
+                                value={value}
+                                onChange={e => setValue(e.target.value)}
+                                placeholder={placeholder}
+                                className="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-transparent text-sm font-medium outline-none focus:border-indigo-500 transition-colors dark:text-white"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') onConfirm(value);
+                                    if (e.key === 'Escape') onCancel();
+                                }}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex gap-2 w-full pt-2">
+                        <button
+                            onClick={onCancel}
+                            className="flex-1 px-4 py-3 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-95"
+                        >
+                            {cancelText}
+                        </button>
+                        <button
+                            onClick={() => onConfirm(value)}
+                            className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-md shadow-indigo-200 dark:shadow-none"
+                        >
+                            {confirmText}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default PromptModal;
