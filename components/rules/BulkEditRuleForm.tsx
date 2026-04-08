@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { Rule, MissionGeometry } from '../../types';
-import { PARAM_LABELS, PARAM_OPTIONS } from '../../utils/constants';
+import { Rule, MissionGeometry, FormFieldDef } from '../../types';
 import GenericFormField from '../ui/GenericFormField';
 import { GenericInput, GenericSelect } from '../ui/GenericInputs';
 import RuleFormModal from './RuleFormModal';
@@ -10,12 +9,13 @@ interface BulkEditRuleFormProps {
     rules: Rule[];
     geometries: MissionGeometry[];
     missionName: string;
+    uiSchema?: FormFieldDef[];
     onClose: () => void;
     onSave: (ruleIds: string[], updatedParams: Record<string, any>) => void;
     darkMode: boolean;
 }
 
-const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, missionName, onClose, onSave, darkMode }) => {
+const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, missionName, uiSchema, onClose, onSave, darkMode }) => {
     const [selectedRuleIds, setSelectedRuleIds] = useState<string[]>([]);
     const [params, setParams] = useState<Record<string, any>>({});
 
@@ -326,48 +326,41 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
                             עדכון פרמטרים משותף
                         </h3>
 
-                        {missionName === 'qa' && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <GenericFormField label={PARAM_LABELS.code_name}>
-                                    <GenericInput value={params.code_name} onChange={v => updateParam('code_name', v)} placeholder="השאר ריק" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.frequency}>
-                                    <GenericSelect value={params.frequency} options={PARAM_OPTIONS.frequency} onChange={v => updateParam('frequency', v)} placeholder="תדירות" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.code_type}>
-                                    <GenericSelect value={params.code_type} options={PARAM_OPTIONS.code_type} onChange={v => updateParam('code_type', v)} placeholder="סוג קוד" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.checks_amount}>
-                                    <GenericInput type="number" value={params.checks_amount} onChange={v => updateParam('checks_amount', v)} placeholder="כמות" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.check_precent} fullWidth>
-                                    <GenericInput type="number" value={params.check_precent} onChange={v => updateParam('check_precent', v)} placeholder="אחוז %" min={0} max={100} />
-                                </GenericFormField>
-                            </div>
-                        )}
-
-                        {missionName === 'new_missions' && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <GenericFormField label={PARAM_LABELS.nm_values}>
-                                    <GenericInput value={params.nm_values} onChange={v => updateParam('nm_values', v)} placeholder="ערכי NM" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.status}>
-                                    <GenericSelect value={params.status} options={PARAM_OPTIONS.status} onChange={v => updateParam('status', v)} placeholder="סטטוס" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.type}>
-                                    <GenericInput value={params.type} onChange={v => updateParam('type', v)} placeholder="סוג" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.mpt_values}>
-                                    <GenericInput value={params.mpt_values} onChange={v => updateParam('mpt_values', v)} placeholder="ערכי MPT" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.h_values}>
-                                    <GenericInput value={params.h_values} onChange={v => updateParam('h_values', v)} placeholder="ערכי H" />
-                                </GenericFormField>
-                                <GenericFormField label={PARAM_LABELS.nm_id} fullWidth>
-                                    <GenericInput value={params.nm_id} onChange={v => updateParam('nm_id', v)} placeholder="מזהה NM" />
-                                </GenericFormField>
-                            </div>
-                        )}
+                        <div className="grid grid-cols-2 gap-4">
+                            {(uiSchema || []).map((field) => {
+                                if (field.condition) {
+                                    const currentDependencyValue = params[field.condition.field];
+                                    if (!field.condition.values.includes(currentDependencyValue)) {
+                                        return null;
+                                    }
+                                }
+                                // BulkEdit doesn't have explicit width definitions from the backend, default to half unless it's specific ones
+                                const isFullWidth = field.key === 'code_name' || field.key === 'nm_values' || field.key === 'nm_id';
+                                return (
+                                    <div key={field.key} className={isFullWidth ? "col-span-1 md:col-span-2" : "col-span-1"}>
+                                        <GenericFormField label={field.label || field.key} fullWidth={isFullWidth}>
+                                            {field.type === 'select' ? (
+                                                <GenericSelect 
+                                                    value={params[field.key] || ''} 
+                                                    onChange={v => updateParam(field.key, v)} 
+                                                    options={field.options || []} 
+                                                    placeholder="ללא שינוי" 
+                                                />
+                                            ) : (
+                                                <GenericInput 
+                                                    type={field.type}
+                                                    value={params[field.key] || ''} 
+                                                    onChange={v => updateParam(field.key, v)} 
+                                                    placeholder="השאר ריק אם אין שינוי"
+                                                    min={field.min}
+                                                    max={field.max}
+                                                />
+                                            )}
+                                        </GenericFormField>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     <div className="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-[2rem] border border-amber-100 dark:border-amber-800/30">

@@ -7,6 +7,7 @@ import BulkRuleForm from '../rules/BulkRuleForm';
 import BulkEditRuleForm from '../rules/BulkEditRuleForm';
 import MissionStatsView from './MissionStatsView';
 import MapOverlays from '../maps/MapOverlays';
+import ConfirmModal from '../ui/ConfirmModal';
 
 interface MissionViewProps {
   mission: Mission;
@@ -191,6 +192,7 @@ const MissionView: React.FC<MissionViewProps> = ({
               onDelete={setRuleToDeleteId}
               geometries={assignedGeometries}
               disabled={isFormOpen}
+              uiSchema={mission.ui_schema}
             />
           ) : (
             <MissionStatsView mission={mission} rules={missionRules} geometries={assignedGeometries} />
@@ -253,119 +255,42 @@ const MissionView: React.FC<MissionViewProps> = ({
           rules={missionRules}
           geometries={assignedGeometries}
           missionName={mission.name}
+          uiSchema={mission.ui_schema}
           onClose={() => setIsBulkEditFormOpen(false)}
           onSave={handleSaveBulkEditRules}
           darkMode={darkMode}
         />
       )}
 
-      {ruleToDeleteId && (
-        <div className="absolute inset-0 z-[5000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-[280px] border border-gray-100 dark:border-slate-800 animate-slideUp">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight">למחוק את החוק?</h4>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mt-1 px-2">
-                  פעולה זו תמחק את החוק ואת השיוך הגיאוגרפי שלו לצמיתות.
-                </p>
-              </div>
-              <div className="flex gap-2 w-full pt-2">
-                <button
-                  onClick={() => setRuleToDeleteId(null)}
-                  className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
-                >
-                  ביטול
-                </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
-                >
-                  מחק
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={!!ruleToDeleteId}
+        title="למחוק את החוק?"
+        description="פעולה זו תמחק את החוק ואת השיוך הגיאוגרפי שלו לצמיתות."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRuleToDeleteId(null)}
+      />
 
-      {geometryToDeleteId && (
-        <div className="absolute inset-0 z-[5000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-[280px] border border-gray-100 dark:border-slate-800 animate-slideUp">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight">למחוק גיאומטריה מהמפה?</h4>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mt-1 px-2">
-                  גאומטריה זו תמחק מהמערכת לצמיתות.
-                </p>
-              </div>
-              <div className="flex gap-2 w-full pt-2">
-                <button
-                  onClick={() => setGeometryToDeleteId(null)}
-                  className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
-                >
-                  ביטול
-                </button>
-                <button
-                  onClick={() => {
-                    onDeleteGeometry(geometryToDeleteId);
-                    setGeometryToDeleteId(null);
-                  }}
-                  className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
-                >
-                  מחק
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={!!geometryToDeleteId}
+        title="למחוק גיאומטריה מהמפה?"
+        description="גאומטריה זו תמחק מהמערכת לצמיתות."
+        onConfirm={() => {
+          onDeleteGeometry(geometryToDeleteId!);
+          setGeometryToDeleteId(null);
+        }}
+        onCancel={() => setGeometryToDeleteId(null)}
+      />
 
-      {geometriesToDeleteIds.length > 0 && (
-        <div className="absolute inset-0 z-[5000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
-          <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-[280px] border border-gray-100 dark:border-slate-800 animate-slideUp">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl flex items-center justify-center shadow-sm">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight">למחוק מפה?</h4>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium leading-relaxed mt-1 px-2">
-                  {geometriesToDeleteIds.length} גיאומטריות אלה ימחקו מהמערכת לצמיתות.
-                </p>
-              </div>
-              <div className="flex gap-2 w-full pt-2">
-                <button
-                  onClick={() => setGeometriesToDeleteIds([])}
-                  className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
-                >
-                  ביטול
-                </button>
-                <button
-                  onClick={() => {
-                    onDeleteGeometries(geometriesToDeleteIds);
-                    setGeometriesToDeleteIds([]);
-                  }}
-                  className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
-                >
-                  מחק
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={geometriesToDeleteIds.length > 0}
+        title="למחוק מפה?"
+        description={`${geometriesToDeleteIds.length} גיאומטריות אלה ימחקו מהמערכת לצמיתות.`}
+        onConfirm={() => {
+          onDeleteGeometries(geometriesToDeleteIds);
+          setGeometriesToDeleteIds([]);
+        }}
+        onCancel={() => setGeometriesToDeleteIds([])}
+      />
     </div>
   );
 };

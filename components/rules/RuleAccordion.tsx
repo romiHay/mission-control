@@ -1,6 +1,5 @@
 import React from 'react';
-import { Rule, MissionGeometry } from '../../types';
-import { PARAM_LABELS } from '../../utils/constants';
+import { Rule, MissionGeometry, FormFieldDef } from '../../types';
 
 interface RuleAccordionProps {
   rules: Rule[];
@@ -10,9 +9,20 @@ interface RuleAccordionProps {
   onDelete: (id: string) => void;
   geometries: MissionGeometry[];
   disabled?: boolean;
+  uiSchema?: FormFieldDef[];
 }
 
-const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onToggle, onEdit, onDelete, geometries, disabled }) => {
+const RuleAccordion: React.FC<RuleAccordionProps> = ({ 
+  rules, 
+  openRuleId, 
+  onToggle, 
+  onEdit, 
+  onDelete, 
+  geometries, 
+  disabled,
+  uiSchema 
+}) => {
+  // If there are no rules, show a friendly empty state message with an icon
   if (rules.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-gray-400 dark:text-slate-600">
@@ -28,6 +38,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
     <div className={`divide-y divide-gray-100 dark:divide-slate-800 transition-opacity duration-300 ${disabled ? 'opacity-50 pointer-events-none saturate-50' : ''}`}>
       {rules.map((rule) => {
         const isOpen = openRuleId === rule.id;
+        
         const linkedGeos = rule.geometryIds && rule.geometryIds.length > 0
           ? geometries.filter(g => rule.geometryIds!.includes(g.id))
           : (rule.geometryId ? geometries.filter(g => g.id === rule.geometryId) : []);
@@ -51,6 +62,8 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
+                
+                {/* Rule Title and Labels */}
                 <div>
                   <h3 className={`font-semibold transition-colors ${isOpen ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-slate-300'}`}>
                     {rule.name}
@@ -63,6 +76,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
                 </div>
               </div>
 
+              {/* Right Side: Action Buttons (Edit / Delete) */}
               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => onEdit(rule)}
@@ -85,24 +99,31 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({ rules, openRuleId, onTogg
               </div>
             </div>
 
+            {/* 2. EXPANDED CONTENT SECTION: Only shown if this rule is open */}
             {isOpen && (
               <div className="px-4 pb-6 pt-0 animate-slideDown overflow-hidden">
                 <div className="space-y-4 flex flex-col items-center">
+                  
                   {rule.parameters && Object.keys(rule.parameters).length > 0 && (
                     <div className="bg-gray-50/50 dark:bg-slate-800/20 rounded-xl p-4 border border-gray-100 dark:border-slate-800/60 w-full max-w-sm mx-auto text-right mt-2 mb-4">
                         <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-3">פרמטרים</span>
                         <div className="grid grid-cols-2 gap-y-3 gap-x-4">
-                          {Object.entries(rule.parameters).map(([key, val]) => (
-                            <div key={key} className="flex flex-col">
-                              <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500">{PARAM_LABELS[key] || key}</span>
-                              <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">
-                                {val !== undefined && val !== null && val !== '' ? String(val) : '-'}
-                              </span>
-                            </div>
-                          ))}
+                          {Object.entries(rule.parameters).map(([key, val]) => {
+                            const fieldDef = uiSchema?.find(f => f.key === key);
+                            const label = fieldDef?.label || key;
+                            return (
+                              <div key={key} className="flex flex-col">
+                                <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500">{label}</span>
+                                <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+                                  {val !== undefined && val !== null && val !== '' ? String(val) : '-'}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                     </div>
                   )}
+                  
                   {hasGeos && (
                     <div className="w-full max-w-sm mx-auto text-right">
                       <div className="inline-flex items-center justify-start gap-2 text-xs bg-green-50/50 dark:bg-green-900/10 px-3 py-2 rounded-lg text-green-700 dark:text-green-400 font-medium whitespace-normal mt-1 border border-green-100 dark:border-green-800/50 w-full">

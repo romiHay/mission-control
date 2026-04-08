@@ -44,7 +44,7 @@ export interface Mission {
   name: string;
   nameHebrew: string;
   description: string;
-  ui_schema?: FormFieldDef[]; // Optional fallback so old missions still compile
+  ui_schema?: FormFieldDef[]; // Schema from the API!
 }
 
 export interface MissionStats {
