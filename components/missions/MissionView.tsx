@@ -5,7 +5,7 @@ import RuleAccordion from '../rules/RuleAccordion';
 import MapDisplay from '../maps/MapDisplay';
 import BulkRuleForm from '../rules/BulkRuleForm';
 import BulkEditRuleForm from '../rules/BulkEditRuleForm';
-import MissionStatsView from './MissionStatsView';
+import MissionStatsView from './MissionStatistics';
 import MapOverlays from '../maps/MapOverlays';
 import ConfirmModal from '../ui/ConfirmModal';
 
@@ -21,7 +21,7 @@ interface MissionViewProps {
   onAddBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
   onUpdateBulkRules: (items: { rule: Rule, newGeo?: MissionGeometry }[]) => void;
   onDeleteGeometry: (id: string) => void;
-  onDeleteGeometries: (ids: string[]) => void;
+  onDeleteGeometries: (ids: string[]) => Promise<void>;
   onSelectSpatialAsset: (missionId: string, ruleId?: string, geoId?: string) => void;
   onSetActiveRule: (id: string | null) => void;
   darkMode: boolean;
@@ -41,13 +41,13 @@ const MissionView: React.FC<MissionViewProps> = ({
   const [tempGeo, setTempGeo] = useState<{ type: GeometryType, coordinates: any } | null>(null);
   const [toggles, setToggles] = useState({ reset: 0, zoomIn: 0, zoomOut: 0 });
   const [ruleToDeleteId, setRuleToDeleteId] = useState<string | null>(null);
-  const [geometryToDeleteId, setGeometryToDeleteId] = useState<string | null>(null);
-  const [geometriesToDeleteIds, setGeometriesToDeleteIds] = useState<string[]>([]);
+  const [pendingDeleteGeoId, setPendingDeleteGeoId] = useState<string | null>(null);
+  const [pendingBulkDeleteIds, setPendingBulkDeleteIds] = useState<string[]>([]);
 
   useEffect(() => setOpenRuleId(activeRuleId), [activeRuleId]);
 
   const missionRules = rules.filter(r => r.missionId === mission.id);
-  
+
   // The big map should only show explicitly assigned geometries
   const assignedGeometries = geometries.filter(g => g.missionId === mission.id);
   // The creator form mini-map will also ONLY see the current mission's geometries
@@ -119,7 +119,7 @@ const MissionView: React.FC<MissionViewProps> = ({
     setIsFormOpen(false);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDeleteRule = () => {
     if (ruleToDeleteId) {
       onDeleteRule(ruleToDeleteId);
       setRuleToDeleteId(null);
@@ -227,8 +227,8 @@ const MissionView: React.FC<MissionViewProps> = ({
               rules={rules} isVisible={viewMode === 'rules'} onSelectAsset={onSelectSpatialAsset} currentMissionId={mission.id}
               darkMode={darkMode} drawingMode={drawingState.isInline ? null : drawingState.mode} onGeometryCaptured={handleGeometryCaptured}
               onCancelDrawing={() => { setDrawingState({ mode: null, isInline: false }); setIsFormOpen(true); }}
-              onDeleteGeometry={setGeometryToDeleteId}
-              onDeleteGeometries={setGeometriesToDeleteIds}
+              onDeleteGeometry={setPendingDeleteGeoId}
+              onDeleteGeometries={setPendingBulkDeleteIds}
               resetViewToggle={toggles.reset} zoomInToggle={toggles.zoomIn} zoomOutToggle={toggles.zoomOut}
             />
           </div>
@@ -266,30 +266,32 @@ const MissionView: React.FC<MissionViewProps> = ({
         isOpen={!!ruleToDeleteId}
         title="למחוק את החוק?"
         description="פעולה זו תמחק את החוק ואת השיוך הגיאוגרפי שלו לצמיתות."
-        onConfirm={handleConfirmDelete}
+        onConfirm={handleConfirmDeleteRule}
         onCancel={() => setRuleToDeleteId(null)}
       />
 
       <ConfirmModal
-        isOpen={!!geometryToDeleteId}
+        isOpen={!!pendingDeleteGeoId}
         title="למחוק גיאומטריה מהמפה?"
         description="גאומטריה זו תמחק מהמערכת לצמיתות."
         onConfirm={() => {
-          onDeleteGeometry(geometryToDeleteId!);
-          setGeometryToDeleteId(null);
+          onDeleteGeometry(pendingDeleteGeoId!);
+          setPendingDeleteGeoId(null);
         }}
-        onCancel={() => setGeometryToDeleteId(null)}
+        onCancel={() => setPendingDeleteGeoId(null)}
       />
 
       <ConfirmModal
-        isOpen={geometriesToDeleteIds.length > 0}
-        title="למחוק מפה?"
-        description={`${geometriesToDeleteIds.length} גיאומטריות אלה ימחקו מהמערכת לצמיתות.`}
-        onConfirm={() => {
-          onDeleteGeometries(geometriesToDeleteIds);
-          setGeometriesToDeleteIds([]);
+        isOpen={pendingBulkDeleteIds.length > 0}
+        title="למחוק דגימות נבחרות?"
+        description={`${pendingBulkDeleteIds.length} גיאומטריות אלה ימחקו מהמערכת לצמיתות.`}
+        onConfirm={async () => {
+          if (typeof onDeleteGeometries === 'function') {
+            await onDeleteGeometries(pendingBulkDeleteIds);
+          }
+          setPendingBulkDeleteIds([]);
         }}
-        onCancel={() => setGeometriesToDeleteIds([])}
+        onCancel={() => setPendingBulkDeleteIds([])}
       />
     </div>
   );

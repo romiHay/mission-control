@@ -4,7 +4,9 @@ import { Mission, Rule, MissionGeometry } from '../types';
 // BASE CONFIGURATION
 // ============================================================================
 // The root URL for all your API requests. If you change your server address, you only need to change it here.
-const BASE_URL = 'http://localhost:8000/api';
+// The root URL for all your API requests.
+// By using '/api', Vite will proxy these requests and log them in your terminal!
+const BASE_URL = '/api';
 
 /**
  * A generic, reusable function to handle all HTTP requests (GET, POST, PUT, DELETE).
@@ -18,63 +20,60 @@ const BASE_URL = 'http://localhost:8000/api';
  * @param customErrorMessage - A fallback error message if the server doesn't return a specific error.
  */
 async function genericFetch<T>(
-    endpoint: string, 
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', 
-    body?: any, 
+    endpoint: string,
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
+    body?: any,
     customErrorMessage: string = 'שגיאה בפנייה לשרת'
 ): Promise<T> {
     const options: RequestInit = {
         method,
         headers: {
-            // We tell the server we are sending and expecting JSON data
             'Content-Type': 'application/json',
         },
     };
 
-    // If we have data to send, we turn it into a JSON string and attach it to the request
     if (body) {
+        // the data we want to send if we have any
         options.body = JSON.stringify(body);
     }
+    try {
+        const response = await fetch(`${BASE_URL}${endpoint}`, options); // execute the request to the backend
 
-    // Execute the network request
-    const response = await fetch(`${BASE_URL}${endpoint}`, options);
+        if (!response.ok) {
+            // Try to read the exact error details from the server, otherwise use the fallback message
+            const errData = await response.json().catch(() => null);
+            console.log(`Error for API call: ${BASE_URL}${endpoint}. STATUS: ${response.status}. MSG: ${errData?.detail || customErrorMessage}`);
+            throw new Error(errData?.detail || customErrorMessage);
+        }
 
-    // If the server returns a bad status (like 404 Not Found or 500 Internal Error)
-    if (!response.ok) {
-        // Try to read the exact error details from the server, otherwise use the fallback message
-        const errData = await response.json().catch(() => null);
-        throw new Error(errData?.detail || customErrorMessage);
+        console.log(`Success for API call: ${BASE_URL}${endpoint}`);
+        return response.json();
+    } catch (err: any) {
+        // Handle network errors or other unexpected crashes
+        if (!(err instanceof Error) || err.message !== (err as any).detail) {
+            console.error(`Network or unexpected error for API call: ${BASE_URL}${endpoint}:`, err);
+        }
+        throw err;
     }
-
-    // Convert the valid response back into JavaScript objects and return it
-    return response.json();
 }
 
-// ============================================================================
-// API METHODS
-// ============================================================================
-// We export an object called 'api' that groups all your server communication functions.
-export const api = {
-    
-    // --- GET METHODS (Fetching data from the server) ---
-    
-    fetchMissions: () => genericFetch<Mission[]>('/missions'),
-    
-    fetchGeometries: () => genericFetch<MissionGeometry[]>('/geometries'),
-    
-    fetchRules: () => genericFetch<Rule[]>('/rules'),
 
-    // --- POST & PUT METHODS (Creating and Updating data) ---
-    
+export const api = {
+
+    fetchMissions: () => genericFetch<Mission[]>('/missions/'),
+    fetchGeometries: () => genericFetch<MissionGeometry[]>('/geometries/'),
+    fetchRules: () => genericFetch<Rule[]>('/rules/'),
+
+    // === RULES APIS === //
+
     /**
      * Adds a new rule and its geometries.
      */
+
     addRule: (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
         // This ensures 'geos' is always an array, whether you provide a single item, multiple, or none
         const geos = Array.isArray(newGeo) ? newGeo : (newGeo ? [newGeo] : (newGeos || []));
-        
-        // We use our generic function, passing the specific endpoint, method, and the body data
-        return genericFetch<any>('/rules', 'POST', { rule, newGeos: geos }, 'שגיאה בשמירת החוק מול השרת');
+        return genericFetch<any>('/rules/create-rule/', 'POST', { rule, newGeos: geos }, 'שגיאה בשמירת החוק מול השרת');
     },
 
     /**
@@ -82,9 +81,33 @@ export const api = {
      */
     updateRule: (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
         const geos = Array.isArray(newGeo) ? newGeo : (newGeo ? [newGeo] : (newGeos || []));
-        
-        return genericFetch<any>(`/rules/${rule.id}`, 'PUT', { rule, newGeos: geos }, 'שגיאה בעדכון החוק מול השרת');
+        return genericFetch<any>(`/rules/${rule.id}/`, 'PUT', { rule, newGeos: geos }, 'שגיאה בעדכון החוק מול השרת');
     },
+
+    /**
+     * deletes an existing rule by its ID.
+     */
+    deleteRule: (ruleId: string) => {
+        return genericFetch<any>(`/rules/delete-rule-${ruleId}/`, 'DELETE', undefined, 'Failed to delete rule');
+    },
+
+    // === GEOMETRIES APIS === //
+
+    /**
+     * deletes an existing geometry by its ID.
+     */
+    deleteGeometry: (geoId: string) => {
+        return genericFetch<any>(`/geometries/delete-geometry-${geoId}/`, 'DELETE', undefined, 'Failed to delete geometry');
+    },
+
+    /**
+     * deletes an existing geometries by their IDs.
+     */
+    deleteGeometries: (geoIds: string[]) => {
+        return genericFetch<any>('/geometries/bulk-delete-geometries/', 'DELETE', geoIds, 'Failed to bulk delete geometries');
+    },
+
+    // NOT IN USE FOR NOW!! - RULES API
 
     /**
      * Bulk save rules. Helpful when you want to save many rules at once instead of one by one.
@@ -99,20 +122,4 @@ export const api = {
     updateBulkRules: (items: any[]) => {
         return genericFetch<any>('/rules/bulk', 'PUT', items, 'שגיאה בעדכון חוקים מול השרת');
     },
-
-    // --- DELETE METHODS (Removing data) ---
-
-    deleteRule: (ruleId: string) => {
-        // Since we are deleting, we don't need to send a body, so we pass 'undefined'
-        return genericFetch<any>(`/rules/${ruleId}`, 'DELETE', undefined, 'Failed to delete rule');
-    },
-
-    deleteGeometry: (geoId: string) => {
-        return genericFetch<any>(`/geometries/${geoId}`, 'DELETE', undefined, 'Failed to delete geometry');
-    },
-
-    deleteGeometries: (geoIds: string[]) => {
-        // Here we send the array of IDs in the body, so we use POST (since some servers don't like bodies in DELETE requests for bulk ops)
-        return genericFetch<any>('/geometries/bulk-delete', 'POST', geoIds, 'Failed to bulk delete geometries');
-    }
 };

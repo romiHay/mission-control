@@ -11,6 +11,28 @@ export default defineConfig(({ mode }) => {
       watch: {
         usePolling: true,
       },
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, _res) => {
+              console.log('--- ERROR: Proxy Error:', err);
+            });
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              console.log('--- RUN: API Request:', req.method, req.url);
+            });
+            proxy.on('proxyRes', (proxyRes, req, _res) => {
+              if (proxyRes.statusCode && proxyRes.statusCode >= 400) {
+                console.log(`--- ERROR: FAIL: API Error Status: ${proxyRes.statusCode} URL: ${req.url}`);
+              } else {
+                console.log(`--- GOOD: API Response: ${proxyRes.statusCode} URL: ${req.url}`);
+              }
+            });
+          },
+        }
+      }
     },
     plugins: [react()],
     define: {

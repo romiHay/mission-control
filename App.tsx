@@ -29,12 +29,7 @@ const App: React.FC = () => {
     }
   }, [selectedMissionId]);
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
-
+  // Removed duplicate useEffect polling block from here
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -83,7 +78,7 @@ const App: React.FC = () => {
       await fetchData();
       if (focusedGeoId && geoIds.includes(focusedGeoId)) setFocusedGeoId(null);
     } catch (err) {
-      console.error(err);
+      console.error('Delete error:', err);
     }
   };
 
@@ -93,7 +88,7 @@ const App: React.FC = () => {
       await api.addBulkRules(payload as any);
       await fetchData();
     } catch (err) {
-      console.error('Bulk Add Error:', err);
+      console.error('Add bulk error:', err);
     }
   };
 
@@ -103,9 +98,15 @@ const App: React.FC = () => {
       await api.updateBulkRules(payload as any);
       await fetchData();
     } catch (err) {
-      console.error('Bulk Update Error:', err);
+      console.error('Update bulk error:', err);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
   return (
     <div dir="rtl" className="flex h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-heebo">
@@ -115,6 +116,7 @@ const App: React.FC = () => {
         onSelectMission={id => { setSelectedMissionId(id); setActiveRuleId(null); setFocusedGeoId(null); }}
         darkMode={darkMode}
         onToggleTheme={() => setDarkMode(!darkMode)}
+        onRefresh={fetchData}
       />
       <main className="flex-1 overflow-hidden">
         {selectedMission ? (

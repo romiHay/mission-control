@@ -79,14 +79,16 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     const unassignedGeos = React.useMemo(() => availableGeometries.filter(g => !g.ruleId || g.ruleId === initialData?.id), [availableGeometries, initialData]);
 
     useEffect(() => {
-        if (!initialData && uiSchema) {
+        // Only initialize if we don't have initial data and params are currently empty.
+        // This prevents resetting the form while the user is typing if the mission data re-fetches.
+        if (!initialData && uiSchema && Object.keys(params).length === 0) {
             const initialParams: Record<string, any> = {};
             uiSchema.forEach(field => {
                 initialParams[field.key] = '';
             });
             setParams(initialParams);
         }
-    }, [uiSchema, initialData]);
+    }, [uiSchema, initialData, params]);
 
 
 
@@ -100,7 +102,17 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         const errs: string[] = [];
         if (uiSchema) {
             uiSchema.forEach(field => {
-                if (!params[field.key]) {
+                // 1. Check if the field is currently "active" based on its condition
+                if (field.condition) {
+                    const currentDependentValue = params[field.condition.field];
+                    if (!field.condition.values.includes(currentDependentValue)) {
+                        return; // Skip validation for hidden fields
+                    }
+                }
+
+                // 2. Check if the value is actually empty (handling 0 and false as valid values)
+                const val = params[field.key];
+                if (val === undefined || val === null || val === '') {
                     errs.push(`שדה "${field.label || field.key}" הינו שדה חובה`);
                 }
             });
@@ -263,7 +275,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                             }}
                             onConvertGeoToEditable={(geo) => {
                                 setSelectedGeoIds(prev => prev.filter(id => id !== geo.id));
-                                setNewGeos(prev => [...prev, { type: 'Polygon', coords: geo.coordinates, name: geo.name }]);
+                                setNewGeos(prev => [...prev, { type: geo.type, coords: geo.coordinates, name: geo.name }]);
                             }}
                             onSetNewGeos={setNewGeos}
                             onCaptureDrawing={(type, coords) => {

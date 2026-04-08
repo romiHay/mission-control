@@ -247,6 +247,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         L.DomEvent.stopPropagation(e);
         
         if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {
+            // Only allow multi-selecting user-created geometries that HAVE NO RULE
             if (!hasRule && geo.createdBy === 'user') {
                 setMultiSelectedGeoIds(prev =>
                     prev.includes(geo.id) ? prev.filter(id => id !== geo.id) : [...prev, geo.id]
