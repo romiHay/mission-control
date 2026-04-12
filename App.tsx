@@ -15,15 +15,24 @@ const App: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [m, g, r] = await Promise.all([
-        api.fetchMissions(),
-        api.fetchGeometries(),
-        api.fetchRules()
-      ]);
+      // 1. Fetch missions to keep the list updated
+      const m = await api.fetchMissions();
       setMissions(m);
-      setGeometries(g);
-      setRules(r);
-      if (m.length > 0 && !selectedMissionId) setSelectedMissionId(m[0].id);
+
+      // 2. Determine which mission's data to pull
+      const targetId = selectedMissionId || (m.length > 0 ? m[0].id : null);
+
+      if (targetId) {
+        // 3. fetch Geometries and Rules ONLY for the current mission
+        const [g, r] = await Promise.all([
+          api.fetchGeometries(targetId),
+          api.fetchRules(targetId)
+        ]);
+        setGeometries(g);
+        setRules(r);
+        
+        if (!selectedMissionId) setSelectedMissionId(targetId);
+      }
     } catch (err) {
       console.error('Data Fetch Error:', err);
     }

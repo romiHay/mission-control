@@ -61,8 +61,8 @@ async function genericFetch<T>(
 export const api = {
 
     fetchMissions: () => genericFetch<Mission[]>('/missions/'),
-    fetchGeometries: () => genericFetch<MissionGeometry[]>('/geometries/'),
-    fetchRules: () => genericFetch<Rule[]>('/rules/'),
+    fetchGeometries: (missionId?: string) => genericFetch<MissionGeometry[]>(missionId ? `/geometries/?mission_id=${missionId}` : '/geometries/'),
+    fetchRules: (missionId?: string) => genericFetch<Rule[]>(missionId ? `/rules/?mission_id=${missionId}` : '/rules/'),
 
     // === RULES APIS === //
 
