@@ -13,32 +13,61 @@ const App: React.FC = () => {
   const [activeRuleId, setActiveRuleId] = useState<string | null>(null);
   const [focusedGeoId, setFocusedGeoId] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      // 1. Fetch missions to keep the list updated
-      const m = await api.fetchMissions();
-      setMissions(m);
-
-      // 2. Determine which mission's data to pull
-      const targetId = selectedMissionId || (m.length > 0 ? m[0].id : null);
-
-      if (targetId) {
-        // 3. fetch Geometries and Rules ONLY for the current mission
-        const [g, r] = await Promise.all([
-          api.fetchGeometries(targetId),
-          api.fetchRules(targetId)
-        ]);
-        setGeometries(g);
-        setRules(r);
+  // 1. INITIAL STARTUP: Fetch missions list AND the first mission's rules immediately
+  useEffect(() => {
+    const boot = async () => {
+      try {
+        const missionsList = await api.fetchMissions();
+        setMissions(missionsList);
         
-        if (!selectedMissionId) setSelectedMissionId(targetId);
+        if (missionsList.length > 0 && !selectedMissionId) {
+          const firstId = missionsList[0].id;
+          setSelectedMissionId(firstId);
+          
+          // EAGER FETCH: Pull first mission data immediately in the same cycle
+          const [g, r] = await Promise.all([
+            api.fetchGeometries(firstId),
+            api.fetchRules(firstId)
+          ]);
+          setGeometries(g);
+          setRules(r);
+        }
+      } catch (err) {
+        console.error('Startup Error:', err);
       }
+    };
+    boot();
+  }, []);
+
+  // 2. Specialized fetch for mission-specific content (used for switches and polling)
+  const fetchCurrentMissionData = useCallback(async () => {
+    if (!selectedMissionId) return;
+    try {
+      const [g, r] = await Promise.all([
+        api.fetchGeometries(selectedMissionId),
+        api.fetchRules(selectedMissionId)
+      ]);
+      setGeometries(g);
+      setRules(r);
     } catch (err) {
-      console.error('Data Fetch Error:', err);
+      console.error('Mission Data Fetch Error:', err);
     }
   }, [selectedMissionId]);
 
-  // Removed duplicate useEffect polling block from here
+  // Proxy function to maintain compatibility with event handlers
+  const fetchData = useCallback(async () => {
+    await fetchCurrentMissionData();
+  }, [fetchCurrentMissionData]);
+
+  // 3. Polling Logic: Runs immediately on mission change and resets the 1-minute timer
+  useEffect(() => {
+    if (selectedMissionId) {
+      fetchCurrentMissionData();
+      const interval = setInterval(fetchCurrentMissionData, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedMissionId, fetchCurrentMissionData]);
+
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -110,12 +139,6 @@ const App: React.FC = () => {
       console.error('Update bulk error:', err);
     }
   };
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
 
   return (
     <div dir="rtl" className="flex h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300 overflow-hidden font-heebo">
