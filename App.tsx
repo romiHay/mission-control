@@ -19,11 +19,11 @@ const App: React.FC = () => {
       try {
         const missionsList = await api.fetchMissions();
         setMissions(missionsList);
-        
+
         if (missionsList.length > 0 && !selectedMissionId) {
           const firstId = missionsList[0].id;
           setSelectedMissionId(firstId);
-          
+
           // EAGER FETCH: Pull first mission data immediately in the same cycle
           const [g, r] = await Promise.all([
             api.fetchGeometries(firstId),

@@ -179,14 +179,9 @@ const RuleMapEditor: React.FC<RuleMapEditorProps> = ({
             // Click interaction for assigned maps
             layer.on('click', (e) => {
                 L.DomEvent.stopPropagation(e);
-
-                // If editing and clicking a previously saved shape, we turn it "new" so vertices can be dragged!
-                // IMPORTANT: We only allow editing if the geometry was created by the user, not the system!
-                if (isEditing && selectedGeoIds.includes(geo.id) && geo.createdBy === 'user') {
-                    onConvertGeoToEditable(geo);
-                } else if (!isEditing) {
-                    onToggleGeoSelection(geo.id);
-                }
+                // Allow selecting/deselecting even in edit mode. 
+                // The parent form will handle converting them to editable points automatically.
+                onToggleGeoSelection(geo.id);
             });
 
             layer.addTo(group);
@@ -453,9 +448,9 @@ const RuleMapEditor: React.FC<RuleMapEditorProps> = ({
                 <div className="absolute top-4 right-4 z-[100] bg-amber-500/90 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex gap-2">
                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping mt-1"></div>
                     <div>
-                        <div className="font-extrabold">מצב עריכה: צורות שנוצרו על ידך ניתנות לשינוי</div>
+                        <div className="font-extrabold">מצב עריכה פעיל: הנקודות מוצגות וניתנות לשינוי</div>
                         <div className="text-[9px] font-medium opacity-90 leading-tight mt-0.5">
-                            לחץ על צורות ירוקות המסומנות בלבן שנוצרו על ידך כדי לערוך אותן.<br />גרור נקודות קיימות, או לחץ על הקווים להוסיף נקודות.
+                            גרור את הנקודות הלבנות בכדי לשנות את הצורה.<br />ניתן ללחוץ על קווי המתאר בכדי להוסיף נקודות חדשות.
                         </div>
                     </div>
                 </div>

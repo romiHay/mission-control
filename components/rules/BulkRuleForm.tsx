@@ -98,6 +98,26 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         if (key === 'frequency' || key === 'status') setDescription(val);
     };
 
+    // --- AUTO-EDIT LOGIC ---
+    // When the user enters "Edit Points" mode, we immediately convert selected 
+    // geometries into editable "newGeos" so their vertices (white dots) appear right away.
+    useEffect(() => {
+        if (isEditing && selectedGeoIds.length > 0) {
+            const geosToConvert = unassignedGeos.filter(g => 
+                selectedGeoIds.includes(g.id) && g.createdBy === 'user'
+            );
+
+            if (geosToConvert.length > 0) {
+                setNewGeos(prev => [
+                    ...prev,
+                    ...geosToConvert.map(g => ({ type: g.type, coords: g.coordinates, name: g.name }))
+                ]);
+                // Remove from standard selection to avoid duplicates (now they are in newGeos)
+                setSelectedGeoIds(prev => prev.filter(id => !geosToConvert.some(g => g.id === id)));
+            }
+        }
+    }, [isEditing, selectedGeoIds, unassignedGeos]);
+
     const handleSave = async () => {
         const errs: string[] = [];
         if (uiSchema) {
