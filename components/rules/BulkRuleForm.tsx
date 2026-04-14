@@ -103,7 +103,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     // geometries into editable "newGeos" so their vertices (white dots) appear right away.
     useEffect(() => {
         if (isEditing && selectedGeoIds.length > 0) {
-            const geosToConvert = unassignedGeos.filter(g => 
+            const geosToConvert = unassignedGeos.filter(g =>
                 selectedGeoIds.includes(g.id) && g.createdBy === 'user'
             );
 
@@ -274,16 +274,31 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                     <div className="flex justify-between items-end">
                         <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-[0.2em]">שיוך גיאוגרפי</label>
                         <div className="flex gap-2">
-                            <button onClick={() => { setIsEditing(!isEditing); setIsDrawing(null); }} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isEditing ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 hover:bg-amber-100'}`}>
-                                {isEditing ? 'סיים עריכה' : 'עריכת נקודות'}
-                            </button>
+                            {(() => {
+                                const hasEditable = newGeos.length > 0 || unassignedGeos.some(g => selectedGeoIds.includes(g.id) && g.createdBy === 'user');
+                                return (
+                                    <button
+                                        onClick={() => { setIsEditing(!isEditing); setIsDrawing(null); }}
+                                        disabled={!hasEditable && !isEditing}
+                                        title={!hasEditable && !isEditing ? "יש לדגום גיאומטריה או לבחור אחת קיימת שנוצרה על ידי המשתמש לפני שתתאפשר עריכת נקודות" : ""}
+                                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!hasEditable && !isEditing
+                                                ? 'opacity-20 cursor-not-allowed bg-gray-100 dark:bg-slate-800 text-gray-400'
+                                                : isEditing
+                                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                                                    : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 hover:bg-amber-100'
+                                            }`}
+                                    >
+                                        {isEditing ? 'סיים עריכה' : 'עריכת נקודות'}
+                                    </button>
+                                );
+                            })()}
                             <button onClick={() => { setIsDrawing('Point'); setIsEditing(false); }} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDrawing === 'Point' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200'}`}>+ נקודה</button>
                             <button onClick={() => { setIsDrawing('Polygon'); setIsEditing(false); }} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDrawing === 'Polygon' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'bg-gray-100 dark:bg-slate-800 text-gray-500 hover:bg-gray-200'}`}>+ פוליגון</button>
                         </div>
                     </div>
 
                     <div className="relative h-80 rounded-[2rem] overflow-hidden border border-gray-200 dark:border-slate-800 shadow-inner group">
-                        <RuleMapEditor 
+                        <RuleMapEditor
                             darkMode={darkMode}
                             availableGeometries={unassignedGeos}
                             selectedGeoIds={selectedGeoIds}
