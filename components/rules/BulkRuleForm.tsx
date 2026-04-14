@@ -110,7 +110,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             if (geosToConvert.length > 0) {
                 setNewGeos(prev => [
                     ...prev,
-                    ...geosToConvert.map(g => ({ type: g.type, coords: g.coordinates, name: g.name }))
+                    ...geosToConvert.map(g => ({ id: g.id, type: g.type, coords: g.coordinates, name: g.name }))
                 ]);
                 // Remove from standard selection to avoid duplicates (now they are in newGeos)
                 setSelectedGeoIds(prev => prev.filter(id => !geosToConvert.some(g => g.id === id)));
@@ -295,7 +295,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                             }}
                             onConvertGeoToEditable={(geo) => {
                                 setSelectedGeoIds(prev => prev.filter(id => id !== geo.id));
-                                setNewGeos(prev => [...prev, { type: geo.type, coords: geo.coordinates, name: geo.name }]);
+                                setNewGeos(prev => [...prev, { id: geo.id, type: geo.type, coords: geo.coordinates, name: geo.name }]);
                             }}
                             onSetNewGeos={setNewGeos}
                             onCaptureDrawing={(type, coords) => {

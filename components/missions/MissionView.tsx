@@ -90,11 +90,11 @@ const MissionView: React.FC<MissionViewProps> = ({
     const newGeos: MissionGeometry[] = [];
 
     selectedGeos.forEach((item, index) => {
-      if (item.id) {
-        existingGeoIds.push(item.id);
-      } else {
+      // If it has coordinates, it means it's either NEW or EDITED.
+      // We must send it in the 'newGeos' array so the backend can process the coordinates.
+      if (item.coords) {
         newGeos.push({
-          id: undefined as any,
+          id: item.id as any, // Preserve the ID so the backend knows to UPDATE instead of INSERT
           missionId: mission.id,
           name: item.name || `מיקום ${index + 1} עבור ${ruleName}`,
           type: item.type,
@@ -102,6 +102,9 @@ const MissionView: React.FC<MissionViewProps> = ({
           ruleId: baseRuleData.id as any,
           createdBy: 'user'
         });
+      } else if (item.id) {
+        // If it only has an ID and no coords, it's an existing geometry we are just linking
+        existingGeoIds.push(item.id);
       }
     });
 

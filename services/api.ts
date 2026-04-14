@@ -81,7 +81,7 @@ export const api = {
      */
     updateRule: (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
         const geos = Array.isArray(newGeo) ? newGeo : (newGeo ? [newGeo] : (newGeos || []));
-        return genericFetch<any>(`/rules/${rule.id}/`, 'PUT', { rule, newGeos: geos }, 'שגיאה בעדכון החוק מול השרת');
+        return genericFetch<any>(`/rules/update-rule-${rule.id}/`, 'PUT', { rule, newGeos: geos }, 'שגיאה בעדכון החוק מול השרת');
     },
 
     /**
