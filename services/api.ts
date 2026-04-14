@@ -73,7 +73,7 @@ export const api = {
     addRule: (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
         // This ensures 'geos' is always an array, whether you provide a single item, multiple, or none
         const geos = Array.isArray(newGeo) ? newGeo : (newGeo ? [newGeo] : (newGeos || []));
-        return genericFetch<any>('/rules/create-rule/', 'POST', { rule, newGeos: geos }, 'שגיאה בשמירת החוק מול השרת');
+        return genericFetch<any>('/rules/create-rule', 'POST', { rule, newGeos: geos }, 'שגיאה בשמירת החוק מול השרת');
     },
 
     /**
@@ -81,14 +81,14 @@ export const api = {
      */
     updateRule: (rule: Rule, newGeo?: MissionGeometry | MissionGeometry[], newGeos?: MissionGeometry[]) => {
         const geos = Array.isArray(newGeo) ? newGeo : (newGeo ? [newGeo] : (newGeos || []));
-        return genericFetch<any>(`/rules/update-rule-${rule.id}/`, 'PUT', { rule, newGeos: geos }, 'שגיאה בעדכון החוק מול השרת');
+        return genericFetch<any>(`/rules/update-rule-${rule.id}`, 'PUT', { rule, newGeos: geos }, 'שגיאה בעדכון החוק מול השרת');
     },
 
     /**
      * deletes an existing rule by its ID.
      */
     deleteRule: (ruleId: string) => {
-        return genericFetch<any>(`/rules/delete-rule-${ruleId}/`, 'DELETE', undefined, 'Failed to delete rule');
+        return genericFetch<any>(`/rules/delete-rule-${ruleId}`, 'DELETE', undefined, 'Failed to delete rule');
     },
 
     // === GEOMETRIES APIS === //
@@ -97,14 +97,14 @@ export const api = {
      * deletes an existing geometry by its ID.
      */
     deleteGeometry: (geoId: string) => {
-        return genericFetch<any>(`/geometries/delete-geometry-${geoId}/`, 'DELETE', undefined, 'Failed to delete geometry');
+        return genericFetch<any>(`/geometries/delete-geometry-${geoId}`, 'DELETE', undefined, 'Failed to delete geometry');
     },
 
     /**
      * deletes an existing geometries by their IDs.
      */
     deleteGeometries: (geoIds: string[]) => {
-        return genericFetch<any>('/geometries/bulk-delete-geometries/', 'DELETE', geoIds, 'Failed to bulk delete geometries');
+        return genericFetch<any>('/geometries/bulk-delete-geometries', 'DELETE', geoIds, 'Failed to bulk delete geometries');
     },
 
     // NOT IN USE FOR NOW!! - RULES API
