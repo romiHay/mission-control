@@ -8,9 +8,10 @@ interface MissionSidebarProps {
   onSelectMission: (id: string) => void;
   darkMode: boolean;
   onToggleTheme: () => void;
+  onRefresh?: () => void;
 }
 
-const MissionSidebar: React.FC<MissionSidebarProps> = ({ missions, selectedMissionId, onSelectMission, darkMode, onToggleTheme }) => {
+const MissionSidebar: React.FC<MissionSidebarProps> = ({ missions, selectedMissionId, onSelectMission, darkMode, onToggleTheme, onRefresh }) => {
   return (
     <aside className="w-64 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-800 flex flex-col shadow-sm z-10 transition-colors duration-300">
       <div className="p-6 h-[92px] border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
@@ -20,19 +21,36 @@ const MissionSidebar: React.FC<MissionSidebarProps> = ({ missions, selectedMissi
           </svg>
           משימות
         </h1>
-        <button
-          onClick={onToggleTheme}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 transition-colors"
-          aria-label="Toggle Theme"
-        >
-          {darkMode ? (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M14.5 12a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
-          ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-          )}
-        </button>
+        <div className="flex items-center gap-1">
+          {/* REFRESH MISSION BUTTON */}
+          {/* {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 transition-colors"
+              aria-label="Refresh Data"
+              title="רענון נתונים"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          )} */}
+          {/* THEME BUTTON */}
+          <button
+            onClick={onToggleTheme}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 transition-colors"
+            aria-label="Toggle Theme"
+          >
+            {darkMode ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M14.5 12a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" /></svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            )}
+          </button>
+        </div>
       </div>
       <nav className="flex-1 overflow-y-auto py-4">
+        {/* MISSION LIST */}
         {missions.map((mission) => (
           <button
             key={mission.id}

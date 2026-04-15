@@ -13,27 +13,60 @@ const App: React.FC = () => {
   const [activeRuleId, setActiveRuleId] = useState<string | null>(null);
   const [focusedGeoId, setFocusedGeoId] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  // 1. INITIAL STARTUP: Fetch missions list AND the first mission's rules immediately
+  useEffect(() => {
+    const boot = async () => {
+      try {
+        const missionsList = await api.fetchMissions();
+        setMissions(missionsList);
+
+        if (missionsList.length > 0 && !selectedMissionId) {
+          const firstId = missionsList[0].id;
+          setSelectedMissionId(firstId);
+
+          // EAGER FETCH: Pull first mission data immediately in the same cycle
+          const [g, r] = await Promise.all([
+            api.fetchGeometries(firstId),
+            api.fetchRules(firstId)
+          ]);
+          setGeometries(g);
+          setRules(r);
+        }
+      } catch (err) {
+        console.error('Startup Error:', err);
+      }
+    };
+    boot();
+  }, []);
+
+  // 2. Specialized fetch for mission-specific content (used for switches and polling)
+  const fetchCurrentMissionData = useCallback(async () => {
+    if (!selectedMissionId) return;
     try {
-      const [m, g, r] = await Promise.all([
-        api.fetchMissions(),
-        api.fetchGeometries(),
-        api.fetchRules()
+      const [g, r] = await Promise.all([
+        api.fetchGeometries(selectedMissionId),
+        api.fetchRules(selectedMissionId)
       ]);
-      setMissions(m);
       setGeometries(g);
       setRules(r);
-      if (m.length > 0 && !selectedMissionId) setSelectedMissionId(m[0].id);
     } catch (err) {
-      console.error('Data Fetch Error:', err);
+      console.error('Mission Data Fetch Error:', err);
     }
   }, [selectedMissionId]);
 
+  // Proxy function to maintain compatibility with event handlers
+  const fetchData = useCallback(async () => {
+    await fetchCurrentMissionData();
+  }, [fetchCurrentMissionData]);
+
+  // 3. Polling Logic: Runs immediately on mission change and resets the 1-minute timer
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    if (selectedMissionId) {
+      fetchCurrentMissionData();
+      const interval = setInterval(fetchCurrentMissionData, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedMissionId, fetchCurrentMissionData]);
 
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -83,7 +116,7 @@ const App: React.FC = () => {
       await fetchData();
       if (focusedGeoId && geoIds.includes(focusedGeoId)) setFocusedGeoId(null);
     } catch (err) {
-      console.error(err);
+      console.error('Delete error:', err);
     }
   };
 
@@ -93,7 +126,7 @@ const App: React.FC = () => {
       await api.addBulkRules(payload as any);
       await fetchData();
     } catch (err) {
-      console.error('Bulk Add Error:', err);
+      console.error('Add bulk error:', err);
     }
   };
 
@@ -103,7 +136,7 @@ const App: React.FC = () => {
       await api.updateBulkRules(payload as any);
       await fetchData();
     } catch (err) {
-      console.error('Bulk Update Error:', err);
+      console.error('Update bulk error:', err);
     }
   };
 
@@ -115,6 +148,7 @@ const App: React.FC = () => {
         onSelectMission={id => { setSelectedMissionId(id); setActiveRuleId(null); setFocusedGeoId(null); }}
         darkMode={darkMode}
         onToggleTheme={() => setDarkMode(!darkMode)}
+        onRefresh={fetchData}
       />
       <main className="flex-1 overflow-hidden">
         {selectedMission ? (
