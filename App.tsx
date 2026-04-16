@@ -40,7 +40,7 @@ const App: React.FC = () => {
   }, []);
 
   // 2. Specialized fetch for mission-specific content (used for switches and polling)
-  const fetchCurrentMissionData = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!selectedMissionId) return;
     try {
       const [g, r] = await Promise.all([
@@ -54,19 +54,14 @@ const App: React.FC = () => {
     }
   }, [selectedMissionId]);
 
-  // Proxy function to maintain compatibility with event handlers
-  const fetchData = useCallback(async () => {
-    await fetchCurrentMissionData();
-  }, [fetchCurrentMissionData]);
-
   // 3. Polling Logic: Runs immediately on mission change and resets the 1-minute timer
   useEffect(() => {
     if (selectedMissionId) {
-      fetchCurrentMissionData();
-      const interval = setInterval(fetchCurrentMissionData, 60000);
+      fetchData();
+      const interval = setInterval(fetchData, 60000);
       return () => clearInterval(interval);
     }
-  }, [selectedMissionId, fetchCurrentMissionData]);
+  }, [selectedMissionId, fetchData]);
 
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');

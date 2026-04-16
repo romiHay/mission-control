@@ -12,24 +12,25 @@ export const GenericInput: React.FC<{
     max?: number;
 }> = ({ value, defaultValue, onChange, onBlur, placeholder, type = "text", required = false, min, max }) => {
     // Local state for blazing fast uncontrolled typing
-    const [localVal, setLocalVal] = React.useState(value !== undefined ? value : (defaultValue || ''));
+    const [localVal, setLocalVal] = React.useState(() => (value !== undefined && value !== null) ? value : (defaultValue ?? ''));
 
     React.useEffect(() => {
-        if (value !== undefined) setLocalVal(value);
-        else if (defaultValue !== undefined && localVal === '') setLocalVal(defaultValue);
-    }, [value, defaultValue]);
+        if (value !== undefined && value !== null) {
+            setLocalVal(value);
+        }
+    }, [value]);
 
     return (
         <input
             required={required}
             type={type}
-            value={localVal || ''}
+            value={(localVal !== undefined && localVal !== null) ? localVal : ''}
             min={min}
             max={max}
             onChange={e => {
                 let val: any = e.target.value;
                 if (type === 'number' && val !== '') {
-                    const parsed = parseInt(val);
+                    const parsed = parseFloat(val);
                     if (!isNaN(parsed)) {
                         val = parsed;
                         if (min !== undefined && val < min) val = min;

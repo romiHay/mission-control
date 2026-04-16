@@ -19,9 +19,7 @@ const MissionStatsView: React.FC<MissionStatsViewProps> = ({ mission, rules, geo
       <section className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-8 shadow-sm transition-colors text-right">
         <div className="flex items-center gap-4 mb-6">
           <div className="p-3 bg-indigo-600 dark:bg-indigo-500 rounded-2xl text-white shadow-lg shadow-indigo-100 dark:shadow-indigo-900/40">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
+            <img src="/icons/stats.png" className="w-8 h-8" alt="stats" />
           </div>
           <div>
             <h3 className="text-2xl font-black text-gray-800 dark:text-white tracking-tight">ביצועי משימה</h3>

@@ -4,8 +4,6 @@ import { Mission, Rule, MissionGeometry } from '../types';
 // BASE CONFIGURATION
 // ============================================================================
 // The root URL for all your API requests. If you change your server address, you only need to change it here.
-// The root URL for all your API requests.
-// By using '/api', Vite will proxy these requests and log them in your terminal!
 const BASE_URL = '/api';
 
 /**
@@ -107,7 +105,7 @@ export const api = {
         return genericFetch<any>('/geometries/bulk-delete-geometries', 'DELETE', geoIds, 'Failed to bulk delete geometries');
     },
 
-    // NOT IN USE FOR NOW!! - RULES API
+    // === BULK RULES APIS === //
 
     /**
      * Bulk save rules. Helpful when you want to save many rules at once instead of one by one.

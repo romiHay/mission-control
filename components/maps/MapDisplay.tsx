@@ -211,16 +211,29 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
 
   }, [darkMode]);
 
-  // Sync Geometries and Fit Bounds ONLY on Mission Load (not every rule update)
+  // Use a ref to always have the "latest" geometry data inside Leaflet callbacks
+  const latestDataRef = useRef({ geometries, rules, drawingMode });
+  useEffect(() => {
+    latestDataRef.current = { geometries, rules, drawingMode };
+  }, [geometries, rules, drawingMode]);
+
+  // Sync Geometries without flickering (Additive/Subtractive logic)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    (Object.values(geoLayersRef.current) as L.Layer[]).forEach((layer) => layer.remove());
-    geoLayersRef.current = {};
+    const currentGeoIds = new Set(geometries.map(g => g.id));
 
+    // 1. Remove layers for geometries that are no longer present
+    Object.keys(geoLayersRef.current).forEach(id => {
+      if (!currentGeoIds.has(id)) {
+        geoLayersRef.current[id].remove();
+        delete geoLayersRef.current[id];
+      }
+    });
+
+    // 2. Add or Update layers
     geometries.forEach(geo => {
-      let layer: L.Layer;
       const hasRule = !!geo.ruleId;
       const associatedRule = rules.find(r => r.id === geo.ruleId);
       const isFocused = focusedRuleId === geo.ruleId || focusedGeoId === geo.id;
@@ -237,50 +250,69 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         fillOpacity: geo.type === 'Point' ? 0.9 : 0.5,
       };
 
-      if (geo.type === 'Point') {
-        const coords = geo.coordinates as [number, number];
+      let layer = geoLayersRef.current[geo.id];
 
-        // Dynamic radius based on zoom level: 
-        // Very small when zoomed out (e.g. zoom 10 -> radius 4)
-        // Normal when zoomed in (e.g. zoom 17+ -> radius 9-10)
-        const zoomBase = Math.max(6, Math.min(10, currentZoom - 7));
-        const radius = isFocused ? zoomBase * 1.5 : zoomBase;
-
-        layer = L.circleMarker(coords, { ...layerOptions, radius });
+      // If layer exists, update it. If not, create it.
+      if (layer) {
+        if (typeof (layer as any).setStyle === 'function') {
+          (layer as any).setStyle(layerOptions);
+        }
+        if (geo.type === 'Point' && typeof (layer as any).setLatLng === 'function') {
+          (layer as any).setLatLng(geo.coordinates as [number, number]);
+          const zoomBase = Math.max(6, Math.min(10, currentZoom - 7));
+          (layer as L.CircleMarker).setRadius(isFocused ? zoomBase * 1.5 : zoomBase);
+        } else if (geo.type === 'Polygon' && typeof (layer as any).setLatLngs === 'function') {
+          (layer as any).setLatLngs(geo.coordinates as [number, number][]);
+          (layer as any).setStyle({ dashArray: hasRule ? undefined : '5, 5' });
+        }
       } else {
-        const coords = geo.coordinates as [number, number][];
-        layer = L.polygon(coords, { ...layerOptions, dashArray: hasRule ? undefined : '5, 5' });
+        // Create NEW layer
+        if (geo.type === 'Point') {
+          const coords = geo.coordinates as [number, number];
+          const zoomBase = Math.max(6, Math.min(10, currentZoom - 7));
+          layer = L.circleMarker(coords, { ...layerOptions, radius: isFocused ? zoomBase * 1.5 : zoomBase });
+        } else {
+          const coords = geo.coordinates as [number, number][];
+          layer = L.polygon(coords, { ...layerOptions, dashArray: hasRule ? undefined : '5, 5' });
+        }
+
+        layer.on('click', (e: L.LeafletMouseEvent) => {
+          const { drawingMode: activeMode, geometries: latestGeos } = latestDataRef.current;
+          if (activeMode) return;
+          L.DomEvent.stopPropagation(e);
+          
+          // Re-fetch the actual geometry data from our ref to avoid stale closure
+          const currentGeo = latestGeos.find(g => g.id === geo.id) || geo;
+          
+          if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {
+              // ALLOW Ctrl-selection for any user-created geometry (even if it has a rule now)
+              if (currentGeo.createdBy === 'user') {
+                  setMultiSelectedGeoIds(prev =>
+                      prev.includes(currentGeo.id) ? prev.filter(id => id !== currentGeo.id) : [...prev, currentGeo.id]
+                  );
+              }
+              return;
+          }
+
+          setMultiSelectedGeoIds([]);
+          (layer as any).openPopup();
+          
+          if (mapInstanceRef.current) {
+              if (currentGeo.type === 'Point') {
+                  mapInstanceRef.current.flyTo(currentGeo.coordinates as [number, number], 18, { duration: 1 });
+              } else if (layer instanceof L.Polygon) {
+                  mapInstanceRef.current.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
+              }
+          }
+
+          if (onSelectAsset) onSelectAsset(currentGeo.missionId, currentGeo.ruleId, currentGeo.id);
+        });
+
+        layer.addTo(map);
+        geoLayersRef.current[geo.id] = layer;
       }
 
-      layer.on('click', (e: L.LeafletMouseEvent) => {
-        if (drawingMode) return;
-        L.DomEvent.stopPropagation(e);
-        
-        if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {
-            // Only allow multi-selecting user-created geometries that HAVE NO RULE
-            if (!hasRule && geo.createdBy === 'user') {
-                setMultiSelectedGeoIds(prev =>
-                    prev.includes(geo.id) ? prev.filter(id => id !== geo.id) : [...prev, geo.id]
-                );
-            }
-            return;
-        }
-
-        setMultiSelectedGeoIds([]);
-        (layer as any).openPopup();
-        
-        const mapObj = mapInstanceRef.current;
-        if (mapObj) {
-            if (geo.type === 'Point') {
-                mapObj.flyTo(geo.coordinates as [number, number], 18, { duration: 1 });
-            } else if (layer instanceof L.Polygon) {
-                mapObj.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
-            }
-        }
-
-        if (onSelectAsset) onSelectAsset(geo.missionId, geo.ruleId, geo.id);
-      });
-
+      // Update Popup (always refresh content in case rule name changed)
       const popupDiv = document.createElement('div');
       popupDiv.innerHTML = `
         <div style="font-family: sans-serif; min-width: 140px; padding: 2px; text-align: right;" dir="rtl">
@@ -288,7 +320,8 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
             ${geo.name || 'ללא שם'}
           </div>
           <div style="font-size: 11px; font-weight: 600; color: ${hasRule ? '#22c55e' : '#ef4444'}; display: flex; align-items: center; justify-content: flex-start; gap: 4px;">
-            <img src="${hasRule ? '/icons/has_rule.png' : '/icons/warning.png'}" style="width: 14px; height: 14px;" /> ${hasRule && associatedRule ? `חוק מוגדר: ${associatedRule.name}` : 'חוק חסר'}
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: ${hasRule ? '#22c55e' : '#ef4444'}; border: 1px solid white;"></div> 
+            ${hasRule && associatedRule ? `חוק מוגדר: ${associatedRule.name}` : 'חוק חסר'}
           </div>
           ${(!hasRule && geo.createdBy === 'user') ? `
           <button id="del-btn-${geo.id}" style="margin-top: 8px; width: 100%; padding: 6px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; transition: opacity 0.2s;" onmousedown="this.style.opacity=0.7" onmouseup="this.style.opacity=1" onmouseleave="this.style.opacity=1">
@@ -315,13 +348,8 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
         autoPan: false,
         className: darkMode ? 'dark-popup' : ''
       });
-
-      layer.addTo(map);
-      geoLayersRef.current[geo.id] = layer;
     });
-
-    // Initial load behavior is handled by a separate effect
-  }, [geometries, rules, darkMode, currentMissionId, drawingMode]);
+  }, [geometries, rules, darkMode, drawingMode, currentMissionId]);
 
   // Handle focused state and multi-select state dynamically without recreating layers
   useEffect(() => {

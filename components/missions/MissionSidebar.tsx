@@ -16,23 +16,10 @@ const MissionSidebar: React.FC<MissionSidebarProps> = ({ missions, selectedMissi
     <aside className="w-64 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-800 flex flex-col shadow-sm z-10 transition-colors duration-300">
       <div className="p-6 h-[92px] border-b border-gray-100 dark:border-slate-800 flex justify-between items-center">
         <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-          <img src="/icons/missions_icon.png" className="w-6 h-6 flex items-center justify-center opacity-40 group-hover:opacity-100 dark:invert transition-opacity" alt="משימות" />
+          <img src="/icons/missions_icon.png" className="w-6 h-6" alt="משימות" />
           משימות
         </h1>
         <div className="flex items-center gap-1">
-          {/* REFRESH MISSION BUTTON */}
-          {/* {onRefresh && (
-            <button
-              onClick={onRefresh}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400 transition-colors"
-              aria-label="Refresh Data"
-              title="רענון נתונים"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          )} */}
           {/* THEME BUTTON */}
           <button
             onClick={onToggleTheme}

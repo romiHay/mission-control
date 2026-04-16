@@ -55,10 +55,3 @@ export interface MissionStats {
   lastUpdated: string;
 }
 
-export interface AppState {
-  missions: Mission[];
-  selectedMissionId: string | null;
-  rules: Rule[];
-  geometries: MissionGeometry[];
-  viewMode: ViewMode;
-}
