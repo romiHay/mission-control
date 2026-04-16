@@ -99,6 +99,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       doubleClickZoom: false // Disabled to allow dblclick for polygon completion
     });
 
+    // Fix for Leaflet icons not appearing offline
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: '/icons/marker-icon-2x.png',
+      iconUrl: '/icons/marker-icon.png',
+      shadowUrl: '/icons/marker-shadow.png',
+    });
+
     mapInstanceRef.current = m;
     setCurrentZoom(m.getZoom());
 
@@ -191,12 +199,14 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
 
     if (tileLayerRef.current) tileLayerRef.current.remove();
 
-    const tileUrl = darkMode
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    // OFFLINE TILE SOURCE: Points to your local ui_looking/tiles folder
+    // You must download tiles and place them in ui_looking/tiles/{z}/{x}/{y}.png
+    const tileUrl = '/tiles/{z}/{x}/{y}.png';
 
     tileLayerRef.current = L.tileLayer(tileUrl, {
-      attribution: '&copy; CARTO'
+      attribution: '&copy; OpenStreetMap',
+      minZoom: 1,
+      maxZoom: 18
     }).addTo(map);
 
   }, [darkMode]);
@@ -278,7 +288,7 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
             ${geo.name || 'ללא שם'}
           </div>
           <div style="font-size: 11px; font-weight: 600; color: ${hasRule ? '#22c55e' : '#ef4444'}; display: flex; align-items: center; justify-content: flex-start; gap: 4px;">
-            <span style="font-size: 14px;">${hasRule ? '✓' : '⚠'}</span> ${hasRule && associatedRule ? `חוק מוגדר: ${associatedRule.name}` : 'חוק חסר'}
+            <img src="${hasRule ? '/icons/has_rule.png' : '/icons/warning.png'}" style="width: 14px; height: 14px;" /> ${hasRule && associatedRule ? `חוק מוגדר: ${associatedRule.name}` : 'חוק חסר'}
           </div>
           ${(!hasRule && geo.createdBy === 'user') ? `
           <button id="del-btn-${geo.id}" style="margin-top: 8px; width: 100%; padding: 6px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; transition: opacity 0.2s;" onmousedown="this.style.opacity=0.7" onmouseup="this.style.opacity=1" onmouseleave="this.style.opacity=1">

@@ -177,9 +177,7 @@ const MissionView: React.FC<MissionViewProps> = ({
                 className="group relative flex items-center justify-center w-10 h-10 bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
                 title="הוספת חוק"
               >
-                <svg className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 4v16m8-8H4" strokeWidth={2.5} strokeLinecap="round" />
-                </svg>
+                <img src="/icons/plus.png" className="w-6 h-6 transition-transform duration-300 group-hover:rotate-90" alt="add" />
               </button>
             </div>
           )}

@@ -26,9 +26,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 <div className="flex flex-col items-center text-center space-y-4">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${iconColorClass}`}>
                         {icon || (
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <img src="/icons/delete_forever.png" className="w-6 h-6" alt="confirm" />
                         )}
                     </div>
                     <div>

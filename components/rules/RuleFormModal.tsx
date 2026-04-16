@@ -57,9 +57,7 @@ const RuleFormModal: React.FC<RuleFormModalProps> = ({
                     </div>
                     {/* Close ('X') button */}
                     <button onClick={onClose} className="p-3 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-2xl transition-all active:scale-90 text-gray-400 group">
-                        <svg className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <img src="/icons/close.png" className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" alt="close" />
                     </button>
                 </header>
 

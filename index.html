@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mission Control</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/tailwind.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -34,10 +34,14 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="/leaflet.css" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800;900&display=swap');
+    @font-face {
+      font-family: 'Heebo';
+      src: url('/fonts/Heebo-Variable.ttf') format('truetype');
+      font-weight: 300 900;
+      font-display: swap;
+    }
 
     body {
       font-family: 'Heebo', sans-serif;
@@ -116,17 +120,7 @@
       border-top-color: rgba(15, 23, 42, 0.9) !important;
     }
   </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "leaflet": "https://esm.sh/leaflet@^1.9.4"
-  }
-}
-</script>
+
   <link rel="stylesheet" href="/index.css">
 </head>
 

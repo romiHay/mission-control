@@ -12,23 +12,21 @@ interface RuleAccordionProps {
   uiSchema?: FormFieldDef[];
 }
 
-const RuleAccordion: React.FC<RuleAccordionProps> = ({ 
-  rules, 
-  openRuleId, 
-  onToggle, 
-  onEdit, 
-  onDelete, 
-  geometries, 
+const RuleAccordion: React.FC<RuleAccordionProps> = ({
+  rules,
+  openRuleId,
+  onToggle,
+  onEdit,
+  onDelete,
+  geometries,
   disabled,
-  uiSchema 
+  uiSchema
 }) => {
   // If there are no rules, show a friendly empty state message with an icon
   if (rules.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-gray-400 dark:text-slate-600">
-        <svg className="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-        </svg>
+        <img src="/icons/inventory.png" className="w-11 h-12 flex items-center justify-center opacity-40 group-hover:opacity-100 dark:invert transition-opacity" alt="שמירה" />
         <p className="text-sm italic">לא הוגדרו חוקים למשימה זו.</p>
       </div>
     );
@@ -38,7 +36,7 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({
     <div className={`divide-y divide-gray-100 dark:divide-slate-800 transition-opacity duration-300 ${disabled ? 'opacity-50 pointer-events-none saturate-50' : ''}`}>
       {rules.map((rule) => {
         const isOpen = openRuleId === rule.id;
-        
+
         const linkedGeos = rule.geometryIds && rule.geometryIds.length > 0
           ? geometries.filter(g => rule.geometryIds!.includes(g.id))
           : (rule.geometryId ? geometries.filter(g => g.id === rule.geometryId) : []);
@@ -52,17 +50,15 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({
             >
               <div className="flex items-center gap-4 flex-1">
                 <button
-                  className={`p-1 rounded-md transition-transform duration-300 ${isOpen ? '-rotate-90 text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/40' : 'rotate-0 text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:hover:text-slate-400'}`}
+                  className={`p-1 rounded-md transition-all duration-300 group ${isOpen ? '-rotate-90 text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/40' : 'rotate-0 text-gray-400 dark:text-slate-600 hover:text-gray-600 dark:hover:text-slate-400'}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggle(rule.id);
                   }}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <img src="/icons/arrow_left.png" className="w-4 h-4 flex items-center justify-center opacity-40 group-hover:opacity-100 dark:invert transition-opacity" alt="פתיחה" />
                 </button>
-                
+
                 {/* Rule Title and Labels */}
                 <div>
                   <h3 className={`font-semibold transition-colors ${isOpen ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-slate-300'}`}>
@@ -80,21 +76,17 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({
               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => onEdit(rule)}
-                  className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-800 rounded transition-all"
+                  className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-800 rounded transition-all group"
                   title="ערוך חוק"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
+                  <img src="/icons/edit.png" className="w-4 h-4 flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity dark:invert dark:brightness-150" alt="עריכה" />
                 </button>
                 <button
                   onClick={() => onDelete(rule.id)}
-                  className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-white dark:hover:bg-slate-800 rounded transition-all"
+                  className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-white dark:hover:bg-slate-800 rounded transition-all group"
                   title="מחק חוק"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <img src="/icons/delete.png" className="w-4 h-4 flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity dark:invert dark:brightness-150" alt="מחיקה" />
                 </button>
               </div>
             </div>
@@ -103,34 +95,31 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({
             {isOpen && (
               <div className="px-4 pb-6 pt-0 animate-slideDown overflow-hidden">
                 <div className="space-y-4 flex flex-col items-center">
-                  
+
                   {rule.parameters && Object.keys(rule.parameters).length > 0 && (
                     <div className="bg-gray-50/50 dark:bg-slate-800/20 rounded-xl p-4 border border-gray-100 dark:border-slate-800/60 w-full max-w-sm mx-auto text-right mt-2 mb-4">
-                        <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-3">פרמטרים</span>
-                        <div className="grid grid-cols-2 gap-y-3 gap-x-4">
-                          {Object.entries(rule.parameters).map(([key, val]) => {
-                            const fieldDef = uiSchema?.find(f => f.key === key);
-                            const label = fieldDef?.label || key;
-                            return (
-                              <div key={key} className="flex flex-col">
-                                <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500">{label}</span>
-                                <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">
-                                  {val !== undefined && val !== null && val !== '' ? String(val) : '-'}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
+                      <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-3">פרמטרים</span>
+                      <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                        {Object.entries(rule.parameters).map(([key, val]) => {
+                          const fieldDef = uiSchema?.find(f => f.key === key);
+                          const label = fieldDef?.label || key;
+                          return (
+                            <div key={key} className="flex flex-col">
+                              <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500">{label}</span>
+                              <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+                                {val !== undefined && val !== null && val !== '' ? String(val) : '-'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
-                  
+
                   {hasGeos && (
                     <div className="w-full max-w-sm mx-auto text-right">
                       <div className="inline-flex items-center justify-start gap-2 text-xs bg-green-50/50 dark:bg-green-900/10 px-3 py-2 rounded-lg text-green-700 dark:text-green-400 font-medium whitespace-normal mt-1 border border-green-100 dark:border-green-800/50 w-full">
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
+                        <img src="/icons/marker-icon.png" className="w-3 h-4 flex-shrink-0" alt="מיקום" />
                         <span>ממוקם על {linkedGeos.map(g => g.name).join(', ')}</span>
                       </div>
                     </div>
