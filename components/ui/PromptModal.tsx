@@ -21,6 +21,16 @@ const PromptModal: React.FC<PromptModalProps> = ({
     icon, onConfirm, onCancel
 }) => {
     const [value, setValue] = useState(initialValue);
+    const dialogRef = React.useRef<HTMLDialogElement>(null);
+
+    React.useEffect(() => {
+        const dialog = dialogRef.current;
+        if (isOpen && dialog && !dialog.open) {
+            dialog.showModal();
+        } else if (!isOpen && dialog && dialog.open) {
+            dialog.close();
+        }
+    }, [isOpen]);
 
     // Update internal state when opened if needed, though we can just rely on standard unmount mapping
     React.useEffect(() => {
@@ -30,8 +40,12 @@ const PromptModal: React.FC<PromptModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="absolute inset-0 z-[5000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
-            <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-sm border border-gray-100 dark:border-slate-800 animate-slideUp">
+        <dialog
+            ref={dialogRef}
+            onClose={onCancel}
+            className="m-auto p-0 bg-transparent outline-none backdrop:bg-slate-900/60 backdrop:backdrop-blur-[2px] animate-fadeIn"
+        >
+            <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-[90vw] max-w-sm border border-gray-100 dark:border-slate-800 animate-slideUp">
                 <div className="flex flex-col items-center text-center space-y-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm ${iconColorClass}`}>
                         {icon || (
@@ -72,7 +86,7 @@ const PromptModal: React.FC<PromptModalProps> = ({
                     </div>
                 </div>
             </div>
-        </div>
+        </dialog>
     );
 };
 

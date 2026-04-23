@@ -33,15 +33,31 @@ const RuleFormModal: React.FC<RuleFormModalProps> = ({
     maxWidth = "max-w-5xl",
     darkMode
 }) => {
-    return (
-        // OVERLAY: The dark, background layer that covers the screen (z-[10000] to sit on top of everything)
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 md:p-10 animate-fadeIn" dir="rtl">
-            
-            {/* Clicking this empty background actually triggers the close function */}
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}></div>
+    const dialogRef = React.useRef<HTMLDialogElement>(null);
 
-            {/* MODAL CONTAINER: The actual window. Uses the customizable 'maxWidth' prop */}
-            <div className={`relative w-full ${maxWidth} max-h-[90vh] bg-white dark:bg-slate-900 shadow-2xl rounded-[2.5rem] flex flex-col overflow-hidden border border-gray-100 dark:border-slate-800 animate-slideUp font-heebo`}>
+    React.useEffect(() => {
+        const dialog = dialogRef.current;
+        if (dialog && !dialog.open) {
+            dialog.showModal();
+        }
+    }, []);
+
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+        if (e.target === dialogRef.current) {
+            onClose();
+        }
+    };
+
+    return (
+        <dialog
+            ref={dialogRef}
+            onClose={onClose}
+            onClick={handleBackdropClick}
+            className="m-auto p-0 bg-transparent outline-none backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm animate-fadeIn"
+            dir="rtl"
+        >
+            {/* MODAL CONTAINER: Using w-[82vw] h-[82vh] for balanced gaps */}
+            <div className={`relative w-[78vw] h-[84vh] ${maxWidth} bg-white dark:bg-slate-900 shadow-2xl rounded-[2.5rem] flex flex-col overflow-hidden border border-gray-100 dark:border-slate-800 animate-slideUp font-heebo`}>
 
                 {/* 1. HEADER SECTION: Sticky top section containing title and X button */}
                 <header className="p-8 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 transition-colors duration-300">
@@ -71,7 +87,7 @@ const RuleFormModal: React.FC<RuleFormModalProps> = ({
                     {footer}
                 </footer>
             </div>
-        </div>
+        </dialog>
     );
 };
 

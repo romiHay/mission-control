@@ -167,7 +167,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             subtitle={missionNameHebrew}
             onClose={onClose}
             darkMode={darkMode}
-            maxWidth="max-w-4xl"
+            maxWidth="max-w-[95vw]"
             footer={
                 <div className="w-full flex flex-col gap-3">
                     <div className="flex gap-4 w-full">
@@ -237,7 +237,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
 
             <div className="space-y-8">
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {(uiSchema || []).map((field) => {
                             if (field.condition) {
                                 const currentDependentValue = params[field.condition.field];
@@ -245,26 +245,30 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                                     return null;
                                 }
                             }
+                            // Logic: Frequency gets its own row. Others are 2 in a row.
+                            const isStandalone = field.key === 'frequency' || field.label === 'תדירות';
                             return (
-                                <GenericFormField key={field.key} label={field.label || field.key} required={true}>
-                                    {field.type === 'select' ? (
-                                        <GenericSelect
-                                            value={params[field.key] || ''}
-                                            onChange={(v) => updateParam(field.key, v)}
-                                            options={field.options || []}
-                                            placeholder="בחר..."
-                                        />
-                                    ) : (
-                                        <GenericInput
-                                            type={field.type}
-                                            defaultValue={params[field.key] || ''}
-                                            onChange={(val: any) => updateParam(field.key, val)}
-                                            onBlur={(e: any) => updateParam(field.key, e.target.value)}
-                                            min={field.min}
-                                            max={field.max}
-                                        />
-                                    )}
-                                </GenericFormField>
+                                <div key={field.key} className={isStandalone ? "col-span-full" : "col-span-1"}>
+                                    <GenericFormField label={field.label || field.key} required={true}>
+                                        {field.type === 'select' ? (
+                                            <GenericSelect
+                                                value={params[field.key] || ''}
+                                                onChange={(v) => updateParam(field.key, v)}
+                                                options={field.options || []}
+                                                placeholder="בחר..."
+                                            />
+                                        ) : (
+                                            <GenericInput
+                                                type={field.type}
+                                                defaultValue={params[field.key] || ''}
+                                                onChange={(val: any) => updateParam(field.key, val)}
+                                                onBlur={(e: any) => updateParam(field.key, e.target.value)}
+                                                min={field.min}
+                                                max={field.max}
+                                            />
+                                        )}
+                                    </GenericFormField>
+                                </div>
                             );
                         })}
                     </div>
@@ -282,10 +286,10 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                                         disabled={!hasEditable && !isEditing}
                                         title={!hasEditable && !isEditing ? "יש לדגום גיאומטריה או לבחור אחת קיימת שנוצרה על ידי המשתמש לפני שתתאפשר עריכת נקודות" : ""}
                                         className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${!hasEditable && !isEditing
-                                                ? 'opacity-20 cursor-not-allowed bg-gray-100 dark:bg-slate-800 text-gray-400'
-                                                : isEditing
-                                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-                                                    : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 hover:bg-amber-100'
+                                            ? 'opacity-20 cursor-not-allowed bg-gray-100 dark:bg-slate-800 text-gray-400'
+                                            : isEditing
+                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+                                                : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 hover:bg-amber-100'
                                             }`}
                                     >
                                         {isEditing ? 'סיים עריכה' : 'עריכת נקודות'}

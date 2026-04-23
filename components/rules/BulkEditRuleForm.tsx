@@ -244,6 +244,7 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
             title="עריכת חוקים מרובה"
             onClose={onClose}
             darkMode={darkMode}
+            maxWidth="max-w-[95vw]"
             footer={
                 <>
                     <button
@@ -262,31 +263,27 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
                 </>
             }
         >
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-10">
+            <div className="flex flex-col gap-12">
 
-                {/* Right Side: Rule Selection (Map + List) */}
-                <div className="md:col-span-2 space-y-6 flex flex-col min-h-0">
-                    <div className="space-y-4 flex flex-col h-full">
+                {/* Top Section: Selection (Map + List in a wide row) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* Map Area (Takes 7/12) */}
+                    <div className="lg:col-span-8 space-y-4">
+                        <label className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest block">תצוגה גאוגרפית של החוקים שנבחרו</label>
+                        <div className="relative w-full h-[350px] rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-slate-800 shadow-inner group">
+                            <div ref={mapRef} className="w-full h-full z-0" />
+                        </div>
+                    </div>
+
+                    {/* Selection List Area (Takes 4/12) */}
+                    <div className="lg:col-span-4 space-y-4 flex flex-col h-[350px]">
                         <div className="flex justify-between items-center shrink-0">
-                            <label className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">בחירת חוקים ({selectedRuleIds.length})</label>
-                            <button
-                                onClick={handleSelectAll}
-                                className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
-                            >
+                            <label className="text-[11px] font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">רשימת חוקים ({selectedRuleIds.length})</label>
+                            <button onClick={handleSelectAll} className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
                                 {selectedRuleIds.length === rules.length ? 'בטל הכל' : 'בחר הכל'}
                             </button>
                         </div>
-
-                        {/* Mini Map */}
-                        <div className="relative w-full h-48 rounded-[2rem] overflow-hidden border border-gray-100 dark:border-slate-800 shrink-0 shadow-inner group">
-                            <div ref={mapRef} className="w-full h-full z-0" />
-                            <div className="absolute top-3 right-3 z-[400] bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-100 dark:border-slate-800 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">בחירה מהמפה</p>
-                            </div>
-                        </div>
-
-                        {/* Scrollable List */}
-                        <div className="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar max-h-[40vh]">
+                        <div className="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
                             {rules.map(rule => (
                                 <div
                                     key={rule.id}
@@ -310,7 +307,6 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
                                         <p className={`font-bold text-sm truncate ${selectedRuleIds.includes(rule.id) ? 'text-indigo-900 dark:text-indigo-100' : 'text-gray-700 dark:text-slate-300'}`}>
                                             {rule.name}
                                         </p>
-                                        <p className="text-[10px] text-gray-400 truncate tracking-tight font-mono">{rule.id}</p>
                                     </div>
                                 </div>
                             ))}
@@ -318,15 +314,15 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
                     </div>
                 </div>
 
-                {/* Left Side: Parameter Updates */}
-                <div className="md:col-span-3 space-y-8">
+                {/* Bottom Section: Parameter Updates (Wide 5-column grid) */}
+                <div className="space-y-8 pt-10 border-t border-gray-100 dark:border-slate-800">
                     <div>
-                        <h3 className="text-sm font-black text-gray-800 dark:text-white uppercase tracking-wider mb-6 flex items-center gap-2">
+                        <h3 className="text-sm font-black text-gray-800 dark:text-white uppercase tracking-wider mb-8 flex items-center gap-3">
                             <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
                             עדכון פרמטרים משותף
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {(uiSchema || []).map((field) => {
                                 if (field.condition) {
                                     const currentDependencyValue = params[field.condition.field];
@@ -334,11 +330,11 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
                                         return null;
                                     }
                                 }
-                                // BulkEdit doesn't have explicit width definitions from the backend, default to half unless it's specific ones
-                                const isFullWidth = field.key === 'code_name' || field.key === 'nm_values' || field.key === 'nm_id';
+                                // Logic: Frequency gets its own row. Others are 2 in a row.
+                                const isStandalone = field.key === 'frequency' || field.label === 'תדירות';
                                 return (
-                                    <div key={field.key} className={isFullWidth ? "col-span-1 md:col-span-2" : "col-span-1"}>
-                                        <GenericFormField label={field.label || field.key} fullWidth={isFullWidth}>
+                                    <div key={field.key} className={isStandalone ? "col-span-full" : "col-span-1"}>
+                                        <GenericFormField label={field.label || field.key} fullWidth={false}>
                                             {field.type === 'select' ? (
                                                 <GenericSelect 
                                                     value={params[field.key] || ''} 
@@ -364,18 +360,15 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
                     </div>
 
                     <div className="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-[2rem] border border-amber-100 dark:border-amber-800/30">
-                        <div className="flex gap-4">
+                        <div className="flex gap-4 items-center">
                             <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-2xl flex items-center justify-center shrink-0">
                                 <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <div className="flex-1">
-                                <h4 className="text-xs font-black text-amber-900 dark:text-amber-300 uppercase tracking-widest mb-1">שים לב</h4>
-                                <p className="text-[11px] text-amber-700 dark:text-amber-400 font-bold leading-relaxed">
-                                    שינויים שהוזנו יבוצעו ב-<span className="text-amber-900 dark:text-amber-200 underline decoration-2">{selectedRuleIds.length}</span> חוקים.
-                                </p>
-                            </div>
+                            <p className="text-xs font-bold text-amber-700 dark:text-amber-400">
+                                שינויים אלו יבוצעו ב-<span className="text-amber-900 dark:text-amber-200 underline decoration-2">{selectedRuleIds.length}</span> חוקים שנבחרו למעלה.
+                            </p>
                         </div>
                     </div>
                 </div>

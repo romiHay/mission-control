@@ -30,16 +30,31 @@ const AlertModal: React.FC<AlertModalProps> = ({
     icon,
     onClose
 }) => {
+    const dialogRef = React.useRef<HTMLDialogElement>(null);
+
+    React.useEffect(() => {
+        const dialog = dialogRef.current;
+        if (isOpen && dialog && !dialog.open) {
+            dialog.showModal();
+        } else if (!isOpen && dialog && dialog.open) {
+            dialog.close();
+        }
+    }, [isOpen]);
+
     // If the modal isn't supposed to be open, we render absolutely nothing
     if (!isOpen) return null;
 
     return (
         // OVERLAY: The dark, blurred background that covers the whole screen
         // z-[5000] ensures it sits on top of everything else
-        <div className="absolute inset-0 z-[5000] bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center p-6 animate-fadeIn">
+        <dialog
+            ref={dialogRef}
+            onClose={onClose}
+            className="m-auto p-0 bg-transparent outline-none backdrop:bg-slate-900/60 backdrop:backdrop-blur-[2px] animate-fadeIn"
+        >
 
             {/* MODAL CONTAINER: The actual white/dark box in the center */}
-            <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full max-w-sm border border-gray-100 dark:border-slate-800 animate-slideUp">
+            <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-[90vw] max-w-sm border border-gray-100 dark:border-slate-800 animate-slideUp">
                 <div className="flex flex-col items-center text-center space-y-4">
 
                     {/* ICON SECTION: Displays the provided icon or a default "Warning/Info" icon */}
@@ -74,7 +89,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
                     </div>
                 </div>
             </div>
-        </div>
+        </dialog>
     );
 };
 
