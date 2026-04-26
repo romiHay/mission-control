@@ -323,39 +323,42 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
                         </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {(uiSchema || []).map((field) => {
-                                if (field.condition) {
-                                    const currentDependencyValue = params[field.condition.field];
-                                    if (!field.condition.values.includes(currentDependencyValue)) {
-                                        return null;
+                            {(() => {
+                                const visibleFields = (uiSchema || []).filter(field => {
+                                    if (field.condition) {
+                                        const currentDependencyValue = params[field.condition.field];
+                                        return field.condition.values.includes(currentDependencyValue);
                                     }
-                                }
-                                // Logic: Frequency gets its own row. Others are 2 in a row.
-                                const isStandalone = field.key === 'frequency' || field.label === 'תדירות';
-                                return (
-                                    <div key={field.key} className={isStandalone ? "col-span-full" : "col-span-1"}>
-                                        <GenericFormField label={field.label || field.key} fullWidth={false}>
-                                            {field.type === 'select' ? (
-                                                <GenericSelect 
-                                                    value={params[field.key] || ''} 
-                                                    onChange={v => updateParam(field.key, v)} 
-                                                    options={field.options || []} 
-                                                    placeholder="ללא שינוי" 
-                                                />
-                                            ) : (
-                                                <GenericInput 
-                                                    type={field.type}
-                                                    value={params[field.key] || ''} 
-                                                    onChange={v => updateParam(field.key, v)} 
-                                                    placeholder="השאר ריק אם אין שינוי"
-                                                    min={field.min}
-                                                    max={field.max}
-                                                />
-                                            )}
-                                        </GenericFormField>
-                                    </div>
-                                );
-                            })}
+                                    return true;
+                                });
+
+                                return visibleFields.map((field, index) => {
+                                    const isLastAndOdd = index === visibleFields.length - 1 && index % 2 === 0;
+                                    return (
+                                        <div key={field.key} className={isLastAndOdd ? "col-span-full" : "col-span-1"}>
+                                            <GenericFormField label={field.label || field.key} fullWidth={false}>
+                                                {field.type === 'select' ? (
+                                                    <GenericSelect 
+                                                        value={params[field.key] || ''} 
+                                                        onChange={v => updateParam(field.key, v)} 
+                                                        options={field.options || []} 
+                                                        placeholder="ללא שינוי" 
+                                                    />
+                                                ) : (
+                                                    <GenericInput 
+                                                        type={field.type}
+                                                        value={params[field.key] || ''} 
+                                                        onChange={v => updateParam(field.key, v)} 
+                                                        placeholder="השאר ריק אם אין שינוי"
+                                                        min={field.min}
+                                                        max={field.max}
+                                                    />
+                                                )}
+                                            </GenericFormField>
+                                        </div>
+                                    );
+                                });
+                            })()}
                         </div>
                     </div>
 

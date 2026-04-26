@@ -238,39 +238,42 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             <div className="space-y-8">
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {(uiSchema || []).map((field) => {
-                            if (field.condition) {
-                                const currentDependentValue = params[field.condition.field];
-                                if (!field.condition.values.includes(currentDependentValue)) {
-                                    return null;
+                        {(() => {
+                            const visibleFields = (uiSchema || []).filter(field => {
+                                if (field.condition) {
+                                    const currentDependentValue = params[field.condition.field];
+                                    return field.condition.values.includes(currentDependentValue);
                                 }
-                            }
-                            // Logic: Frequency gets its own row. Others are 2 in a row.
-                            const isStandalone = field.key === 'frequency' || field.label === 'תדירות';
-                            return (
-                                <div key={field.key} className={isStandalone ? "col-span-full" : "col-span-1"}>
-                                    <GenericFormField label={field.label || field.key} required={true}>
-                                        {field.type === 'select' ? (
-                                            <GenericSelect
-                                                value={params[field.key] || ''}
-                                                onChange={(v) => updateParam(field.key, v)}
-                                                options={field.options || []}
-                                                placeholder="בחר..."
-                                            />
-                                        ) : (
-                                            <GenericInput
-                                                type={field.type}
-                                                defaultValue={params[field.key] || ''}
-                                                onChange={(val: any) => updateParam(field.key, val)}
-                                                onBlur={(e: any) => updateParam(field.key, e.target.value)}
-                                                min={field.min}
-                                                max={field.max}
-                                            />
-                                        )}
-                                    </GenericFormField>
-                                </div>
-                            );
-                        })}
+                                return true;
+                            });
+
+                            return visibleFields.map((field, index) => {
+                                const isLastAndOdd = index === visibleFields.length - 1 && index % 2 === 0;
+                                return (
+                                    <div key={field.key} className={isLastAndOdd ? "col-span-full" : "col-span-1"}>
+                                        <GenericFormField label={field.label || field.key} required={true}>
+                                            {field.type === 'select' ? (
+                                                <GenericSelect
+                                                    value={params[field.key] || ''}
+                                                    onChange={(v) => updateParam(field.key, v)}
+                                                    options={field.options || []}
+                                                    placeholder="בחר..."
+                                                />
+                                            ) : (
+                                                <GenericInput
+                                                    type={field.type}
+                                                    defaultValue={params[field.key] || ''}
+                                                    onChange={(val: any) => updateParam(field.key, val)}
+                                                    onBlur={(e: any) => updateParam(field.key, e.target.value)}
+                                                    min={field.min}
+                                                    max={field.max}
+                                                />
+                                            )}
+                                        </GenericFormField>
+                                    </div>
+                                );
+                            });
+                        })()}
                     </div>
                 </div>
 
