@@ -50,7 +50,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
         <dialog
             ref={dialogRef}
             onClose={onClose}
-            className="m-auto p-0 bg-transparent outline-none backdrop:bg-slate-900/60 backdrop:backdrop-blur-[2px] animate-fadeIn"
+            className="fixed inset-0 w-full h-full m-0 p-0 bg-transparent border-none flex items-center justify-center outline-none backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm animate-fadeIn"
         >
 
             {/* MODAL CONTAINER: The actual white/dark box in the center */}
@@ -82,7 +82,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
                     <div className="w-full pt-1">
                         <button
                             onClick={onClose}
-                            className="w-full px-4 py-3.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+                            className="w-full px-4 py-3.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-slate-700 transition-all active:scale-95 outline-none focus:ring-2 focus:ring-indigo-500/20"
                         >
                             {buttonText}
                         </button>

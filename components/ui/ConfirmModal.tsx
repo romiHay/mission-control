@@ -35,7 +35,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <dialog
             ref={dialogRef}
             onClose={onCancel}
-            className="m-auto p-0 bg-transparent outline-none backdrop:bg-slate-900/60 backdrop:backdrop-blur-[2px] animate-fadeIn"
+            className="fixed inset-0 w-full h-full m-0 p-0 bg-transparent border-none flex items-center justify-center outline-none backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm animate-fadeIn"
         >
             <div className="bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-6 w-full min-w-[280px] max-w-sm border border-gray-100 dark:border-slate-800 animate-slideUp">
                 <div className="flex flex-col items-center text-center space-y-4">
@@ -53,7 +53,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                     <div className="flex gap-2 w-full pt-2">
                         <button
                             onClick={onCancel}
-                            className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95"
+                            className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all active:scale-95 outline-none focus:ring-2 focus:ring-gray-200 dark:focus:ring-slate-700"
                         >
                             {cancelText}
                         </button>
