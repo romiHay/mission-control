@@ -37,6 +37,7 @@ export interface FormFieldDef {
   condition?: FormFieldCondition; // E.g., only show if frequency is "חודשי"
   min?: number;
   max?: number;
+  required?: boolean;
 }
 
 export interface Mission {

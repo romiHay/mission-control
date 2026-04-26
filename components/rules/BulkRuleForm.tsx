@@ -131,8 +131,9 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                 }
 
                 // 2. Check if the value is actually empty (handling 0 and false as valid values)
+                const isRequired = field.required !== false;
                 const val = params[field.key];
-                if (val === undefined || val === null || val === '') {
+                if (isRequired && (val === undefined || val === null || val === '')) {
                     errs.push(`שדה "${field.label || field.key}" הינו שדה חובה`);
                 }
             });
@@ -251,7 +252,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                                 const isLastAndOdd = index === visibleFields.length - 1 && index % 2 === 0;
                                 return (
                                     <div key={field.key} className={isLastAndOdd ? "col-span-full" : "col-span-1"}>
-                                        <GenericFormField label={field.label || field.key} required={true}>
+                                        <GenericFormField label={field.label || field.key} required={field.required !== false}>
                                             {field.type === 'select' ? (
                                                 <GenericSelect
                                                     value={params[field.key] || ''}

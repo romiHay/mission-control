@@ -336,7 +336,7 @@ const BulkEditRuleForm: React.FC<BulkEditRuleFormProps> = ({ rules, geometries, 
                                     const isLastAndOdd = index === visibleFields.length - 1 && index % 2 === 0;
                                     return (
                                         <div key={field.key} className={isLastAndOdd ? "col-span-full" : "col-span-1"}>
-                                            <GenericFormField label={field.label || field.key} fullWidth={false}>
+                                            <GenericFormField label={field.label || field.key} fullWidth={false} required={field.required !== false}>
                                                 {field.type === 'select' ? (
                                                     <GenericSelect 
                                                         value={params[field.key] || ''} 
