@@ -81,3 +81,29 @@ body {
 .dark .leaflet-tooltip-top.bulk-edit-tooltip::before {
   border-top-color: rgba(15, 23, 42, 0.9) !important;
 }
+
+/* Optimized GPU-Accelerated Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-fadeIn { animation: fadeIn 0.15s ease-out forwards !important; }
+.animate-slideUp { animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; }
+.animate-slideDown { animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; }
+.animate-slideInRight { animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards !important; }

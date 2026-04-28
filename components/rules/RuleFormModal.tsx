@@ -42,17 +42,10 @@ const RuleFormModal: React.FC<RuleFormModalProps> = ({
         }
     }, []);
 
-    const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
-        if (e.target === dialogRef.current) {
-            onClose();
-        }
-    };
-
     return (
         <dialog
             ref={dialogRef}
             onClose={onClose}
-            onClick={handleBackdropClick}
             className="fixed inset-0 w-full h-full m-0 p-0 bg-transparent border-none flex items-center justify-center outline-none backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm animate-fadeIn"
             dir="rtl"
         >
