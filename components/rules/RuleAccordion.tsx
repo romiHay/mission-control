@@ -100,18 +100,23 @@ const RuleAccordion: React.FC<RuleAccordionProps> = ({
                     <div className="bg-gray-50/50 dark:bg-slate-800/20 rounded-xl p-4 border border-gray-100 dark:border-slate-800/60 w-full max-w-sm mx-auto text-right mt-2 mb-4">
                       <span className="text-[11px] font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-wider block mb-3">פרמטרים</span>
                       <div className="grid grid-cols-2 gap-y-3 gap-x-4">
-                        {Object.entries(rule.parameters).map(([key, val]) => {
-                          const fieldDef = uiSchema?.find(f => f.key === key);
-                          const label = fieldDef?.label || key;
-                          return (
-                            <div key={key} className="flex flex-col">
-                              <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500">{label}</span>
-                              <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">
-                                {val !== undefined && val !== null && val !== '' ? String(val) : '-'}
-                              </span>
-                            </div>
-                          );
-                        })}
+                        {Object.entries(rule.parameters)
+                          .filter(([key]) => {
+                            const fieldDef = uiSchema?.find(f => f.key === key);
+                            return fieldDef?.type !== 'geometry';
+                          })
+                          .map(([key, val]) => {
+                            const fieldDef = uiSchema?.find(f => f.key === key);
+                            const label = fieldDef?.label || key;
+                            return (
+                              <div key={key} className="flex flex-col">
+                                <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500">{label}</span>
+                                <span className="text-sm font-semibold text-gray-700 dark:text-slate-300">
+                                  {val !== undefined && val !== null && val !== '' ? String(val) : '-'}
+                                </span>
+                              </div>
+                            );
+                          })}
                       </div>
                     </div>
                   )}

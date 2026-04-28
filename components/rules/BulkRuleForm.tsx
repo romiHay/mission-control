@@ -93,7 +93,9 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         if (!initialData && uiSchema && Object.keys(params).length === 0) {
             const initialParams: Record<string, any> = {};
             uiSchema.forEach(field => {
-                initialParams[field.key] = '';
+                if (field.type !== 'geometry') {
+                    initialParams[field.key] = '';
+                }
             });
             setParams(initialParams);
         }
@@ -243,9 +245,10 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                 label="הכנס שם עבור הגיאומטריה שדגמת:"
                 placeholder="לדוגמה: מחסן מרכזי"
                 initialValue=""
+                required={true}
                 onConfirm={(val) => {
                     if (pendingGeo) {
-                        setNewGeos(prev => [...prev, { type: pendingGeo.type, coords: pendingGeo.coords, name: val || 'ללא שם' }]);
+                        setNewGeos(prev => [...prev, { type: pendingGeo.type, coords: pendingGeo.coords, name: val }]);
                         setPendingGeo(null);
                     }
                 }}
