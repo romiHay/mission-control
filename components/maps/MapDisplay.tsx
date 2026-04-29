@@ -280,29 +280,29 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
           const { drawingMode: activeMode, geometries: latestGeos } = latestDataRef.current;
           if (activeMode) return;
           L.DomEvent.stopPropagation(e);
-          
+
           // Re-fetch the actual geometry data from our ref to avoid stale closure
           const currentGeo = latestGeos.find(g => g.id === geo.id) || geo;
-          
+
           if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {
-              // ALLOW Ctrl-selection for any user-created geometry (even if it has a rule now)
-              if (currentGeo.createdBy === 'user') {
-                  setMultiSelectedGeoIds(prev =>
-                      prev.includes(currentGeo.id) ? prev.filter(id => id !== currentGeo.id) : [...prev, currentGeo.id]
-                  );
-              }
-              return;
+            // ALLOW Ctrl-selection for any user-created geometry (even if it has a rule now)
+            if (currentGeo.createdBy === 'user') {
+              setMultiSelectedGeoIds(prev =>
+                prev.includes(currentGeo.id) ? prev.filter(id => id !== currentGeo.id) : [...prev, currentGeo.id]
+              );
+            }
+            return;
           }
 
           setMultiSelectedGeoIds([]);
           (layer as any).openPopup();
-          
+
           if (mapInstanceRef.current) {
-              if (currentGeo.type === 'Point') {
-                  mapInstanceRef.current.flyTo(currentGeo.coordinates as [number, number], 18, { duration: 1 });
-              } else if (layer instanceof L.Polygon) {
-                  mapInstanceRef.current.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
-              }
+            if (currentGeo.type === 'Point') {
+              mapInstanceRef.current.flyTo(currentGeo.coordinates as [number, number], 18, { duration: 1 });
+            } else if (layer instanceof L.Polygon) {
+              mapInstanceRef.current.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1 });
+            }
           }
 
           if (onSelectAsset) onSelectAsset(currentGeo.missionId, currentGeo.ruleId, currentGeo.id);
@@ -426,12 +426,12 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       const ruleGeos = geometries.filter(g => g.ruleId === focusedRuleId);
       if (ruleGeos.length > 0 && focusedRuleId !== lastTargetGeoIdRef.current) {
         lastTargetGeoIdRef.current = focusedRuleId;
-        
+
         const bounds = L.latLngBounds([]);
         ruleGeos.forEach(geo => {
           const layer = geoLayersRef.current[geo.id];
           if (layer) layer.openPopup(); // Open pipups for these geometries
-          
+
           if (geo.type === 'Point') {
             bounds.extend(geo.coordinates as [number, number]);
           } else {
@@ -487,30 +487,30 @@ const MapDisplay: React.FC<MapDisplayProps> = ({
       )}
 
       {multiSelectedGeoIds.length > 0 && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 p-2.5 flex items-center gap-4 animate-slideDown">
-             <span className="font-bold text-xs bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 tracking-wide uppercase">
-                 נבחרו {multiSelectedGeoIds.length} דגימות
-             </span>
-             <button 
-                 onClick={() => {
-                     setMultiSelectedGeoIds([]);
-                 }} 
-                 className="text-[10px] font-black uppercase text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-2 transition-colors active:scale-95"
-             >
-                 ביטול
-             </button>
-             <button 
-                 onClick={() => {
-                     if (onDeleteGeometries) {
-                         onDeleteGeometries(multiSelectedGeoIds);
-                         setMultiSelectedGeoIds([]);
-                     }
-                 }} 
-                 className="bg-red-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-600 transition-colors shadow-sm active:scale-95"
-             >
-                 מחק בחירה
-             </button>
-          </div>
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 p-2.5 flex items-center gap-4 animate-slideDown">
+          <span className="font-bold text-xs bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-lg border border-blue-200 dark:border-blue-800 tracking-wide uppercase">
+            נבחרו {multiSelectedGeoIds.length} דגימות
+          </span>
+          <button
+            onClick={() => {
+              setMultiSelectedGeoIds([]);
+            }}
+            className="text-[10px] font-black uppercase text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 px-3 py-2 transition-colors active:scale-95"
+          >
+            ביטול
+          </button>
+          <button
+            onClick={() => {
+              if (onDeleteGeometries) {
+                onDeleteGeometries(multiSelectedGeoIds);
+                setMultiSelectedGeoIds([]);
+              }
+            }}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-red-600 transition-colors shadow-sm active:scale-95"
+          >
+            מחק בחירה
+          </button>
+        </div>
       )}
     </div>
   );

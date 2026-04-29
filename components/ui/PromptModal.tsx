@@ -12,13 +12,15 @@ export interface PromptModalProps {
     iconColorClass?: string;
     onConfirm: (value: string) => void;
     onCancel: () => void;
+    required?: boolean;
 }
 
 const PromptModal: React.FC<PromptModalProps> = ({
     isOpen, title, label, placeholder, initialValue = '',
     confirmText = 'שמור', cancelText = 'ביטול',
     iconColorClass = 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20',
-    icon, onConfirm, onCancel
+    icon, onConfirm, onCancel,
+    required = false
 }) => {
     const [value, setValue] = useState(initialValue);
     const dialogRef = React.useRef<HTMLDialogElement>(null);
@@ -55,7 +57,14 @@ const PromptModal: React.FC<PromptModalProps> = ({
                     <div className="w-full">
                         <h4 className="text-base font-black text-gray-800 dark:text-white uppercase tracking-tight mb-3">{title}</h4>
                         <div className="w-full text-right mt-2">
-                            <label className="text-xs font-bold text-gray-500 dark:text-white mb-2 block">{label}</label>
+                            <label className="text-xs font-bold text-gray-500 dark:text-white mb-2 flex items-center gap-1">
+                                {label}
+                                {required && (
+                                    <span title="שדה חובה" className="text-red-500 hover:text-red-600 transition-colors cursor-help flex items-center" aria-label="שדה חובה">
+                                        <img src="/icons/warning.png" className="w-3.5 h-3.5" />
+                                    </span>
+                                )}
+                            </label>
                             <input
                                 type="text"
                                 autoFocus
@@ -64,7 +73,10 @@ const PromptModal: React.FC<PromptModalProps> = ({
                                 placeholder={placeholder}
                                 className="w-full p-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-transparent text-sm font-medium outline-none focus:border-indigo-500 transition-colors dark:text-white"
                                 onKeyDown={(e) => {
-                                    if (e.key === 'Enter') onConfirm(value);
+                                    if (e.key === 'Enter') {
+                                        if (required && !value.trim()) return;
+                                        onConfirm(value);
+                                    }
                                     if (e.key === 'Escape') onCancel();
                                 }}
                             />
@@ -79,7 +91,8 @@ const PromptModal: React.FC<PromptModalProps> = ({
                         </button>
                         <button
                             onClick={() => onConfirm(value)}
-                            className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-md shadow-indigo-200 dark:shadow-none"
+                            disabled={required && !value.trim()}
+                            className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-md shadow-indigo-200 dark:shadow-none disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                         >
                             {confirmText}
                         </button>

@@ -30,7 +30,7 @@ const MapOverlays: React.FC<MapOverlaysProps> = ({ drawingMode, onResetMap }) =>
                     className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm w-[34px] h-[34px] hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center group"
                     title="אפס תצוגת מפה"
                 >
-                    <img src="/icons/reset.png" className="w-4 h-4 group-hover:scale-110 transition-transform" alt="reset" />
+                    <img src="/icons/reset.png" className="w-4 h-4 group-hover:scale-110 transition-transform dark:invert dark:brightness-150" alt="reset" />
                 </button>
             </div>
         </>

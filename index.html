@@ -5,34 +5,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hamelia</title>
-  <script src="/tailwind.js"></script>
+  <script src="/tailwind.js?v=3"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
-          keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
-            },
-            slideDown: {
-              '0%': { height: '0', opacity: '0' },
-              '100%': { height: 'auto', opacity: '1' },
-            },
-            slideInRight: {
-              '0%': { transform: 'translateX(100%)' },
-              '100%': { transform: 'translateX(0)' },
-            }
-          }
         },
         animation: {
-          fadeIn: 'fadeIn 0.3s ease-in-out',
-          slideDown: 'slideDown 0.3s ease-in-out',
-          slideInRight: 'slideInRight 0.3s ease-out',
+          fadeIn: 'none',
+          slideDown: 'none',
+          slideInRight: 'none',
         },
       }
-    }
+    };
   </script>
   <link rel="stylesheet" href="/leaflet.css" />
 

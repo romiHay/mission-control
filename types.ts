@@ -32,12 +32,13 @@ export interface FormFieldCondition {
 export interface FormFieldDef {
   key: string;
   label: string;
-  type: 'text' | 'number' | 'select';
+  type: 'text' | 'number' | 'select' | 'geometry';
   options?: string[]; // Used if type is 'select'
   condition?: FormFieldCondition; // E.g., only show if frequency is "חודשי"
   min?: number;
   max?: number;
   required?: boolean;
+  mode?: 'select-only' | 'all'; // Used if type is 'geometry'
 }
 
 export interface Mission {
