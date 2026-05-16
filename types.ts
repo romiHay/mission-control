@@ -5,16 +5,33 @@ export type ViewMode = 'rules' | 'statistics';
 export interface MissionGeometry {
   id: string;
   missionId: string;
+  teamIds: string[]; // Support multiple teams
   type: GeometryType;
   coordinates: number[] | number[][]; // [lat, lng] or [[lat, lng], ...]
   name: string;
   ruleId?: string; // Links back to a rule if applicable
-  createdBy: 'system' | 'user'; // Source of geometry creation
+  createdBy: 'system' | 'user'; // Source of creation
+  system_uuid?: string; // New field from system
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Team {
+  uuid: string;
+  name: string;
+}
+
+export interface User {
+  uuid: string;
+  username: string;
+  full_name: string;
+  teams: Team[];
 }
 
 export interface Rule {
   id: string;
   missionId: string;
+  teamIds: string[]; // Support multiple teams
   name: string;
   description: string;
   value: string;
@@ -22,6 +39,8 @@ export interface Rule {
   geometryIds?: string[];
   // Dynamic parameters for different mission types
   parameters?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface FormFieldCondition {
@@ -56,4 +75,3 @@ export interface MissionStats {
   coveragePercentage: number;
   lastUpdated: string;
 }
-

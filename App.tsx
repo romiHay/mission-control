@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Mission, Rule, MissionGeometry } from './types';
+import { Mission, Rule, MissionGeometry, User } from './types';
 import MissionSidebar from './components/missions/MissionSidebar';
 import MissionView from './components/missions/MissionView';
 import { api } from './services/api';
@@ -12,13 +12,18 @@ const App: React.FC = () => {
   const [geometries, setGeometries] = useState<MissionGeometry[]>([]);
   const [activeRuleId, setActiveRuleId] = useState<string | null>(null);
   const [focusedGeoId, setFocusedGeoId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // 1. INITIAL STARTUP: Fetch missions list AND the first mission's rules immediately
   useEffect(() => {
     const boot = async () => {
       try {
-        const missionsList = await api.fetchMissions();
+        const [missionsList, userProfile] = await Promise.all([
+          api.fetchMissions(),
+          api.fetchMe()
+        ]);
         setMissions(missionsList);
+        setCurrentUser(userProfile);
 
         if (missionsList.length > 0 && !selectedMissionId) {
           const firstId = missionsList[0].id;
@@ -146,7 +151,17 @@ const App: React.FC = () => {
         onRefresh={fetchData}
       />
       <main className="flex-1 overflow-hidden">
-        {selectedMission ? (
+        {missions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-8 animate-fadeIn">
+            <div className="w-24 h-24 bg-indigo-50 dark:bg-slate-900 rounded-3xl flex items-center justify-center mb-8 shadow-inner">
+              <img src="/icons/no_permissions.png" className="w-12 h-12 group-hover:rotate-90 transition-transform duration-300" alt="No access" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">אין משימות זמינות</h2>
+            <p className="text-gray-500 dark:text-slate-400 max-w-md leading-relaxed">
+              המשתמש שלך לא משויך לאף משימה פעילה עבור הצוותים שלך ({currentUser?.teams.map(t => t.name).join(', ') || 'ללא צוות'}).
+            </p>
+          </div>
+        ) : selectedMission ? (
           <MissionView
             mission={selectedMission}
             rules={rules}
@@ -162,6 +177,7 @@ const App: React.FC = () => {
             onDeleteGeometries={handleDeleteGeometries}
             onSelectSpatialAsset={(mId, rId, gId) => { setSelectedMissionId(mId); setActiveRuleId(rId || null); setFocusedGeoId(gId || null); }}
             darkMode={darkMode}
+            userTeams={currentUser?.teams || []}
             onSetActiveRule={id => {
               // Toggle: if clicking the active one, close it
               const nextId = activeRuleId === id ? null : id;
@@ -174,7 +190,7 @@ const App: React.FC = () => {
             }}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-400 font-medium">בחר משימה כדי להתחיל</div>
+          <div className="flex items-center justify-center h-full text-gray-400 font-medium animate-pulse">בחר משימה מתוך המשימות כדי להתחיל</div>
         )}
       </main>
     </div>

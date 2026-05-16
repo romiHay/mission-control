@@ -1,4 +1,4 @@
-import { Mission, Rule, MissionGeometry } from '../types';
+import { Mission, Rule, MissionGeometry, User } from '../types';
 
 // ============================================================================
 // BASE CONFIGURATION
@@ -61,6 +61,7 @@ export const api = {
     fetchMissions: () => genericFetch<Mission[]>('/missions/'),
     fetchGeometries: (missionId?: string) => genericFetch<MissionGeometry[]>(missionId ? `/geometries/?mission_id=${missionId}` : '/geometries/'),
     fetchRules: (missionId?: string) => genericFetch<Rule[]>(missionId ? `/rules/?mission_id=${missionId}` : '/rules/'),
+    fetchMe: () => genericFetch<User>('/users/me'),
 
     // === RULES APIS === //
 

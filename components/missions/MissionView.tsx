@@ -25,12 +25,13 @@ interface MissionViewProps {
   onSelectSpatialAsset: (missionId: string, ruleId?: string, geoId?: string) => void;
   onSetActiveRule: (id: string | null) => void;
   darkMode: boolean;
+  userTeams: { uuid: string, name: string }[];
 }
 
 const MissionView: React.FC<MissionViewProps> = ({
   mission, rules, geometries, activeRuleId, focusedGeoId,
   onAddRule, onUpdateRule, onDeleteRule, onAddBulkRules, onUpdateBulkRules, onDeleteGeometry, onDeleteGeometries,
-  onSelectSpatialAsset, onSetActiveRule, darkMode
+  onSelectSpatialAsset, onSetActiveRule, darkMode, userTeams
 }) => {
   const [openRuleId, setOpenRuleId] = useState<string | null>(activeRuleId);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -72,7 +73,8 @@ const MissionView: React.FC<MissionViewProps> = ({
         type: tempGeo.type,
         coordinates: tempGeo.coordinates,
         ruleId: rule.id,
-        createdBy: 'user'
+        createdBy: 'user',
+        teamIds: rule.teamIds || []
       };
     }
     editingRule ? onUpdateRule(rule, newGeo) : onAddRule(rule, newGeo);
@@ -98,7 +100,8 @@ const MissionView: React.FC<MissionViewProps> = ({
           type: item.type,
           coordinates: item.coords,
           ruleId: baseRuleData.id as any,
-          createdBy: 'user'
+          createdBy: 'user',
+          teamIds: baseRuleData.teamIds || []
         });
       } else if (item.id) {
         // If it only has an ID and no coords, it's an existing geometry we are just linking
@@ -113,7 +116,8 @@ const MissionView: React.FC<MissionViewProps> = ({
       description: baseRuleData.description || '',
       value: baseRuleData.value || '',
       parameters: baseRuleData.parameters,
-      geometryIds: existingGeoIds
+      geometryIds: existingGeoIds,
+      teamIds: baseRuleData.teamIds || []
     };
 
     isUpdating ? await onUpdateRule(newRule, newGeos as any) : await onAddRule(newRule, newGeos as any);
@@ -237,6 +241,7 @@ const MissionView: React.FC<MissionViewProps> = ({
           onSaveBulk={handleSaveBulkRules}
           availableGeometries={missionGeometries}
           darkMode={darkMode}
+          userTeams={userTeams}
         />
       )}
 

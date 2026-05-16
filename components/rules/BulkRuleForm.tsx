@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { Rule, MissionGeometry, GeometryType, FormFieldDef } from '../../types';
@@ -17,9 +16,10 @@ interface BulkRuleFormProps {
     uiSchema?: FormFieldDef[];
     initialData?: Rule;
     onClose: () => void;
-    onSaveBulk: (baseData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any, name?: string }[]) => Promise<void>;
+    onSaveBulk: (baseData: Partial<Rule>, selectedGeos: { id?: string, type: GeometryType, coords: any, name?: string, system_uuid?: string }[]) => Promise<void>;
     availableGeometries: MissionGeometry[];
     darkMode: boolean;
+    userTeams: { uuid: string, name: string }[];
 }
 
 const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
@@ -31,7 +31,8 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     availableGeometries,
     uiSchema,
     initialData,
-    darkMode
+    darkMode,
+    userTeams
 }) => {
     const [params, setParams] = useState<Record<string, any>>(initialData?.parameters || {});
     const [name, setName] = useState(initialData?.name || '');
@@ -43,7 +44,8 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
 
     // Selection state
     const [selectedGeoIds, setSelectedGeoIds] = useState<string[]>(initialData?.geometryIds || []);
-    const [newGeos, setNewGeos] = useState<{ type: GeometryType, coords: any, name?: string }[]>([]);
+    const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>(initialData?.teamIds || []);
+    const [newGeos, setNewGeos] = useState<{ id?: string, type: GeometryType, coords: any, name?: string, system_uuid?: string }[]>([]);
 
     // Drawing state
     const [isDrawing, setIsDrawing] = useState<GeometryType | null>(null);
@@ -110,7 +112,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
     };
 
     // --- AUTO-EDIT LOGIC ---
-    // When the user enters "Edit Points" mode, we immediately convert selected 
+    // When the user enters "Edit Points" mode, we immediately convert selected
     // geometries into editable "newGeos" so their vertices (white dots) appear right away.
     useEffect(() => {
         if (isEditing && selectedGeoIds.length > 0) {
@@ -121,7 +123,7 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
             if (geosToConvert.length > 0) {
                 setNewGeos(prev => [
                     ...prev,
-                    ...geosToConvert.map(g => ({ id: g.id, type: g.type, coords: g.coordinates, name: g.name }))
+                    ...geosToConvert.map(g => ({ id: g.id, type: g.type, coords: g.coordinates, name: g.name, system_uuid: g.system_uuid }))
                 ]);
                 // Remove from standard selection to avoid duplicates (now they are in newGeos)
                 setSelectedGeoIds(prev => prev.filter(id => !geosToConvert.some(g => g.id === id)));
@@ -168,11 +170,11 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
         try {
             const selectedExisting = selectedGeoIds.map(id => {
                 const g = availableGeometries.find(ag => ag.id === id)!;
-                return { id: g.id, type: g.type, coords: g.coordinates };
+                return { id: g.id, type: g.type, coords: g.coordinates, system_uuid: g.system_uuid };
             });
 
             const allGeos = [...selectedExisting, ...newGeos];
-            await onSaveBulk({ id: initialData?.id, name, description, value, parameters: params }, allGeos);
+            await onSaveBulk({ id: initialData?.id, name, description, value, parameters: params, teamIds: selectedTeamIds }, allGeos);
         } catch (err: any) {
             console.error(err);
             setError([err.message || 'אירעה שגיאה בשמירת החוק. אנא נסה שנית.']);
@@ -296,6 +298,38 @@ const BulkRuleForm: React.FC<BulkRuleFormProps> = ({
                                 );
                             });
                         })()}
+                    </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-slate-800">
+                    <label className="block text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-[0.2em]">
+                        שיוך צוותים (מי יוכל לראות את החוק)
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                        {userTeams.map(team => {
+                            const isSelected = selectedTeamIds.includes(team.uuid);
+                            return (
+                                <button
+                                    key={team.uuid}
+                                    onClick={() => {
+                                        setSelectedTeamIds(prev =>
+                                            isSelected ? prev.filter(id => id !== team.uuid) : [...prev, team.uuid]
+                                        );
+                                    }}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${isSelected
+                                            ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
+                                            : 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800 text-gray-400 hover:border-indigo-200'
+                                        }`}
+                                >
+                                    {team.name}
+                                </button>
+                            );
+                        })}
+                        {userTeams.length === 0 && (
+                            <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest italic">
+                                לא נמצאו צוותים משויכים למשתמש
+                            </span>
+                        )}
                     </div>
                 </div>
 
